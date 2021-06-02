@@ -108,6 +108,20 @@ var LDWADI = function(w1){
     return 12;
 }
 
+var LDROR = function(r1, o1) {
+    var vo1 = getByteRegVal(o1);
+    setByteRegVal(r1, memory[vo1+0xFF00]);
+    PC++;
+    return 12;
+}
+
+var LDORR = function(o1, r1) {
+    var rv = getByteRegVal(r1);
+    var ov = getByteRegVal(o1);
+    memory[oxFF00+ov] = rv;
+    return 12;
+}
+
 decode[0x00] = function() { // NOP
     PC++;
     return 4;
@@ -331,7 +345,7 @@ decode[0x72] = function() { // LD (HL),D
     return LDWADR(HL,D);
 }
 decode[0x73] = function() { // LD (HL),E
-    retrun LDWADR(HL,E);
+    return LDWADR(HL,E);
 }
 decode[0x74] = function() { // LD (HL),H
     return LDWADR(HL,H);
@@ -342,3 +356,11 @@ decode[0x75] = function() { // LD (HL),L
 decode[0x36] = function() { // LD (HL),n
     return LDWADI(HL);
 }
+
+decode[0xF2] = function() { // LD A,(C) 
+    return LDROR(A, C);
+}
+decode[0xE2] = function() { // LD (C),A
+    return LDORR(C, A);
+}
+
