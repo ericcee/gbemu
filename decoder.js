@@ -42,7 +42,7 @@ var decode = new Array(0xFF);
 var CBdecode = new Array(0xFF);
 
 for(var i = 0; i < 0xFF; i++){
-    decode[i] = function() { notImplemented(i); }
+    decode[i] = false
     CBdecode[i] = function() { notImplemented(i); }
 }
 
@@ -409,6 +409,19 @@ decode[0xE2] = function() { // LD (C),A
 
 // TODO: Implement function shit
 
+decode[0x47] = function() { // LD B,A
+} 
+decode[0x4F] = function() { // LD C,A
+} 
+decode[0x57] = function() { // LD D,A
+} 
+decode[0x5F] = function() { // LD E,A
+} 
+decode[0x67] = function() { // LD H,A
+} 
+decode[0x6F] = function() { // LD L,A
+} 
+
 decode[0x3A] = function() { // LDD A,(HL)
     //return LDDRW(A,HL);
 } 
@@ -521,6 +534,12 @@ decode[0x9D] = function() {}
 decode[0x9E] = function() {}
 decode[0xEE] = function() {}
 
+decode[0xDE] = function() { // SBC A,#
+}
+
+
+
+
 // AND
 
 decode[0xA7] = function() {}
@@ -546,6 +565,18 @@ decode[0xB6] = function() {}
 decode[0xF6] = function() {}
 
 // XOR
+
+decode[0xAF] = function() {}
+decode[0xA8] = function() {}
+decode[0xA9] = function() {}
+decode[0xAA] = function() {}
+decode[0xAB] = function() {}
+decode[0xAC] = function() {}
+decode[0xAD] = function() {}
+decode[0xAE] = function() {}
+decode[0xEE] = function() {}
+
+// CP
 
 decode[0xBF] = function() {}
 decode[0xB8] = function() {}
@@ -656,40 +687,76 @@ decode[0x1F] = function() {}
 
 // JP nn
 
-0xC3
+decode[0xC3] = function() {}
 
 // JP cc,nn
 
-C2
-CA
-D2
-DA
+decode[0xC2] = function() {}
+decode[0xCA] = function() {}
+decode[0xD2] = function() {}
+decode[0xDA] = function() {}
 
 // JP (HL)
 
-E9
+decode[0xE9] = function() {}
 
 // JR n
 
-18
+decode[0x18] = function() {}
 
 // JR cc,n
 
-20
-28
-30
-38
+decode[0x20] = function() {}
+decode[0x28] = function() {}
+decode[0x30] = function() {}
+decode[0x38] = function() {}
 
 // Calls
 
 // CALL nn
 
-CD
+decode[0xCD] = function() {}
 
+// CALL cc,nn
 
+decode[0xC4] = function() {}
+decode[0xCC] = function() {}
+decode[0xD4] = function() {}
+decode[0xDC] = function() {}
 
+// RST n
 
+decode[0xC7] = function() {}
+decode[0xCF] = function() {}
+decode[0xD7] = function() {}
+decode[0xDF] = function() {}
+decode[0xE7] = function() {}
+decode[0xEF] = function() {}
+decode[0xF7] = function() {}
+decode[0xFF] = function() {}
 
+// RET
+
+decode[0xC9] = function() {}
+
+// RET cc
+
+decode[0xC0] = function() {}
+decode[0xC8] = function() {}
+decode[0xD0] = function() {}
+decode[0xD8] = function() {}
+
+// RETI
+
+decode[0xD9] = function() {}
+
+// Prefix CB implementation
+
+decode[0xCB] = function() {
+    reg[PC]++;
+    var cbcode = readMem(reg[PC]);
+    return CBdecode[cbcode]();
+}
 
 // Prefix CB
 
@@ -826,3 +893,19 @@ for(var i = 0; i < 256; i++){
 }
 
 console.log(count);
+
+var instcovered = "";
+console.log("  0 1 2 3 4 5 6 7 8 9 A B C D E F ");
+for(var y = 0; y < 16; y++) {
+    instcovered += "0123456789ABCDEF"[y]+' ';
+    for(var x = 0; x < 16; x++){
+        if(!decode[y*16+x]){
+            instcovered += " |";
+        }
+        else {
+            instcovered += "X|";
+        }
+    }
+    console.log(instcovered);
+    instcovered="";
+}
