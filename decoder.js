@@ -3,7 +3,6 @@ var decode = new Array(256);
 var memory = new Array(0xFFFF);
 
 var reg = new Array(6);
-var flags = new Array(4);
 
 const A = 0;
 const F = 1;
@@ -36,13 +35,8 @@ reg[HL] = 0x014D;
 reg[SP] = 0xFFFE;
 reg[PC] = 0x100;
 
-flags[_Z] = false;
-flags[_N] = false;
-flags[_H] = false;
-flags[_C] = false;
 
-
-var getByteRegVal = function(r1) {
+var getByteRegister = function(r1) {
     var r16 = Math.floor(r1 / 2);
     var hl = r1 % 2;
     var rb = reg[r16];
@@ -53,7 +47,7 @@ var getByteRegVal = function(r1) {
     else return rl;
 }
 
-var setByteRegVal = function(r1, val) {
+var setByteRegister = function(r1, val) {
     var r16 = Math.floor(r1 / 2);
     var hl = r1 % 2;
     var rb = reg[r16];
@@ -66,23 +60,47 @@ var setByteRegVal = function(r1, val) {
     reg[r16] = (rh << 8) | rl;
 }
 
+var writeMem = function(addr, b) {
+    memory[addr]=b;
+}
+
+var readMem = function(addr) {
+    return memory[addr];
+}
+
+var setFlag = function(fl, o) {
+    var flagreg = reg[AF]&0xFF;
+    var areg = reg[AF]&0xFF00;
+    if(o){
+        flagreg |= 0x01 << fl;
+    }
+    else {
+        flagreg &= ~(0x01 << fl)
+    }
+    reg[AF] = areg|flagreg;
+}
+
+var getFlag = function(fl){
+    return reg[AF] &  0x01 << fl;
+}
+
 function LDRN(r1) {
     reg[PC]++;
     var immediate = memory[PC];
     reg[PC]++;
-    setByteRegFrom(r1, immediate);
+    setByteRegister(r1, immediate);
     return 8;
 }
 
 function LDRR(r1,r2){
-    setByteRegVal(r1, getByteRegVal(r2));
+    setByteRegister(r1, getByteRegister(r2));
     reg[PC]++;
     return 4;
 }
 
 function LDRD(r1, dr) {
     var addr = reg[dr];
-    setByteRegVal(r1, memory[addr]);
+    setByteRegister(r1, memory[addr]);
     reg[PC]++;
     return 4;
 }
@@ -93,12 +111,12 @@ function LDRAD(r1) {
     reg[PC]++;
     var n2 = memory[PC];
     var fus = (n2 << 8) | n1;
-    setByteRegVal(A, memory[fus]);
+    setByteRegister(A, memory[fus]);
     return 16;
 }
 
 var LDWADR = function(w1, r1){
-    memory[reg[w1]] = getByteRegVal(r1);
+    memory[reg[w1]] = getByteRegister(r1);
     reg[PC]++;
     return 8;
 }
@@ -109,7 +127,7 @@ var LDIADR = function(r1) {
     reg[PC]++;
     var n2 = memory[PC];
     var fus = (n2 << 8) | n1;
-    setByteRegVal(r1, fus);
+    setByteRegister(r1, fus);
     return 16;
 }
 
@@ -122,15 +140,15 @@ var LDWADI = function(w1){
 }
 
 var LDROR = function(r1, o1) {
-    var vo1 = getByteRegVal(o1);
-    setByteRegVal(r1, memory[vo1+0xFF00]);
+    var vo1 = getByteRegister(o1);
+    setByteRegister(r1, memory[vo1+0xFF00]);
     reg[PC]++;
     return 12;
 }
 
 var LDORR = function(o1, r1) {
-    var rv = getByteRegVal(r1);
-    var ov = getByteRegVal(o1);
+    var rv = getByteRegister(r1);
+    var ov = getByteRegister(o1);
     memory[oxFF00+ov] = rv;
     reg[PC]++;
     return 12;
