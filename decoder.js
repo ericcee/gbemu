@@ -1,5 +1,5 @@
 
-var memory = new Array(0xFFFF);
+var memory = new Uint8Array(0xFFFF);
 
 var reg = new Array(6);
 
@@ -10,10 +10,10 @@ const B = 2;
 const C = 3;
 
 const D = 4;
-const E = 6;
+const E = 5;
 
-const H = 7;
-const L = 8;
+const H = 6;
+const L = 7;
 
 const AF = 0;
 const BC = 1;
@@ -61,6 +61,7 @@ var getByteRegister = function(r1) {
 var setByteRegister = function(r1, val) {
     var r16 = Math.floor(r1 / 2);
     var hl = r1 % 2;
+    
     var rb = reg[r16];
     var rh = (rb & 0xFF00)>>8;
     var rl = (rb & 0xFF);
@@ -97,7 +98,7 @@ var getFlag = function(fl){
 
 function LDRN(r1) {
     reg[PC]++;
-    var immediate = readMem(PC);
+    var immediate = readMem(reg[PC]);
     reg[PC]++;
     setByteRegister(r1, immediate);
     return 8;
@@ -118,11 +119,12 @@ function LDRD(r1, dr) {
 
 function LDRAD(r1) {
     reg[PC]++;
-    var n1 = readMem(PC);
+    var n1 = readMem(reg[PC]);
     reg[PC]++;
-    var n2 = readMem(PC);
+    var n2 = readMem(reg[PC]);
     var fus = (n2 << 8) | n1;
     setByteRegister(A, memory[fus]);
+    reg[PC]++;
     return 16;
 }
 
@@ -134,17 +136,18 @@ var LDWADR = function(w1, r1){
 
 var LDIADR = function(r1) {
     reg[PC]++;
-    var n1 = readMem(PC);
+    var n1 = readMem(reg[PC]);
     reg[PC]++;
-    var n2 = readMem(PC);
+    var n2 = readMem(reg[PC]);
     var fus = (n2 << 8) | n1;
     setByteRegister(r1, fus);
+    reg[PC]++;
     return 16;
 }
 
 var LDWADI = function(w1){
     reg[PC]++;
-    var num = readMem(PC);
+    var num = readMem(reg[PC]);
     reg[PC]++;
     writeMem(reg[w1], num);
     return 12;
@@ -232,7 +235,7 @@ decode[0x3E] = function() { // LD A,(#)
 }
 
 decode[0x02] = function() { // LD (BC),A
-    return LWADR(BC, A);
+    return LDWADR(BC, A);
 }
 decode[0x12] = function() { // LD (DE),A
     return LDWADR(DE, A);
@@ -243,8 +246,6 @@ decode[0x77] = function() { // LD (HL),A
 decode[0xEA] = function() { // LD (nn),A
     return LDIADR(A);
 }
-
-
 
 decode[0x40] = function() { // LD B,B
     return LDRR(B,B);
@@ -410,129 +411,263 @@ decode[0xE2] = function() { // LD (C),A
 // TODO: Implement function shit
 
 decode[0x47] = function() { // LD B,A
+    return LDRR(B,A);
 } 
 decode[0x4F] = function() { // LD C,A
+    return LDRR(C,A);
 } 
 decode[0x57] = function() { // LD D,A
+    return LDRR(D,A);
 } 
 decode[0x5F] = function() { // LD E,A
+    return LDRR(E,A);
 } 
 decode[0x67] = function() { // LD H,A
+    return LDRR(H,A);
 } 
 decode[0x6F] = function() { // LD L,A
+    return LDRR(L,A);
 } 
 
 decode[0x3A] = function() { // LDD A,(HL)
-    //return LDDRW(A,HL);
+    reg[PC]++;
+    var hl = reg[HL];
+    setByteRegister(A, readMem(hl));
+    reg[HL]++;
+    return 8;
 } 
 
 decode[0x32] = function() { // LDD (HL),A
-    //return LDDWR(HL,A);
+    reg[PC]++;
+    var hl = reg[HL];
+    writeMem(hl, getByteRegister(A));
+    reg[HL]++;
+    return 8;
 }
 
 decode[0x2A] = function() { // LDI A,(HL)
-    //return LDIRW(A,HL);
+    reg[PC]++;
+    var hl = reg[HL];
+    setByteRegister(A, readMem(hl));
+    reg[HL]--;
+    return 8;
 }
 
 decode[0x22] = function() { // LDI (HL),A
-    //return LDIWR(HL,A);
+    reg[PC]++;
+    var hl = reg[HL];
+    writeMem(hl, getByteRegister(A));
+    reg[HL]--;
+    return 8;
 }
 
 decode[0xE0] = function() { // LDH A,(n)
+    reg[PC]++;
+    var n = readMem(reg[PC]);
+    setByteRegister(A, readMem(n));
+    reg[PC]++;
+    return 12;
 }
 
 decode[0xF0] = function() { // LDH (n),A
+    reg[PC]++;
+    var n = readMem(reg[PC]);
+    writeMem(0xFF00+n, getByteRegister(A));
+    reg[PC]++;
+    return 12;
+}
+
+function LDRWN(r16){
+    reg[PC]++;
+    var n1 = readMem(reg[PC]);
+    reg[PC]++;
+    var n2 = readMem(reg[PC]);
+    var cv = (n2<<8)|n1;
+    reg[BC] = cv;
+    reg[PC]++;
+    return 12;
 }
 
 decode[0x01] = function() { // LD BC,nn
+    return LDRWN(BC);
 }
 decode[0x11] = function() { // LD DE,nn
+    return LDRWN(DE);
 }
 decode[0x21] = function() { // LD HL,nn
+    return LDRWN(HL);
 }
 decode[0x31] = function() { // LD SP,nn
+    return LDRWN(SP);
 }
 
 decode[0xF9] = function() { // LD SP,HL
+    reg[SP] = reg[HL];
+    reg[PC]++;
+    return 8;
 }
 
 decode[0xF8] = function() { // LDHL SP,n
+    reg[PC]++;
+    var n = readMem(reg[PC]);
+    reg[PC]++;
+    reg[HL] = reg[SP]+n;
+    return 12;
 }
 
-decode[0x08] = function() { // LD nn,SP
+decode[0x08] = function() { // LD (nn),SP
+    reg[PC]++;
+    var n1 = readMem(reg[PC]);
+    reg[PC]++;
+    var n2 = readMem(reg[PC]);
+    var cv = (n2<<8)|n1; 
+    
+    var n1sp = (reg[SP]&0xFF);
+    var n2sp = (reg[SP]&0xFF00)>>8;
+    
+    
+    writeMem(cv, n2sp);
+    writeMem(cv+1, n1sp);
+    reg[PC]++;
+    
+    return 20;
+}
+
+function gb_push(r16) {
+    reg[SP]-=2;
+    var re = reg[r16];
+    var n1 = re&0xFF;
+    var n2 = (re&0xFF00)>>8;
+    writeMem(reg[SP], n2);
+    writeMem(reg[SP+1], n1);
+    reg[PC]++;
+    return 16;
+}
+
+function gb_pop(r16) {
+    var n1 = readMem(reg[SP]);
+    var n2 = readMem(reg[SP+1]);
+    reg[r16] = (n1<<8)|n1;
+    reg[SP] +=2;
+    reg[PC]++;
+    return 12;
 }
 
 // PUSH Instruction
 
 decode[0xF5] = function() { // PUSH AF
+    return gb_push(AF);
 }
 decode[0xC5] = function() { // PUSH BC
+    return gb_push(BC);
 }
 decode[0xD5] = function() { // PUSH DE
+    return gb_push(DE);
 }
 decode[0xE5] = function() { // PUSH HL
+    return gb_push(HL);
 }
 
 // POP Instruction
 
 decode[0xF1] = function() { // POP AF
+    gb_pop(AF);
 }
 decode[0xC1] = function() { // POP BC
+    gb_pop(BC);
 }
 decode[0xD1] = function() { // POP DE
+    gb_pop(DE);
 }
 decode[0xE1] = function() { // POP HL
+    gb_pop(HL);
 }
 
 // Arithmetic
 
 // ADD page 80
 
-decode[0x87] = function() {}
-decode[0x80] = function() {}
-decode[0x81] = function() {}
-decode[0x82] = function() {}
-decode[0x83] = function() {}
-decode[0x84] = function() {}
-decode[0x85] = function() {}
-decode[0x86] = function() {}
-decode[0xC6] = function() {}
+decode[0x87] = function() {
+}
+decode[0x80] = function() {
+}
+decode[0x81] = function() {
+}
+decode[0x82] = function() {
+}
+decode[0x83] = function() {
+}
+decode[0x84] = function() {
+}
+decode[0x85] = function() {
+}
+decode[0x86] = function() {
+}
+decode[0xC6] = function() {
+}
 
 // ADC
 
-decode[0x8F] = function() {}
-decode[0x88] = function() {}
-decode[0x89] = function() {}
-decode[0x8A] = function() {}
-decode[0x8B] = function() {}
-decode[0x8C] = function() {}
-decode[0x8D] = function() {}
-decode[0x8E] = function() {}
-decode[0xCE] = function() {}
+decode[0x8F] = function() {
+}
+decode[0x88] = function() {
+}
+decode[0x89] = function() {
+}
+decode[0x8A] = function() {
+}
+decode[0x8B] = function() {
+}
+decode[0x8C] = function() {
+}
+decode[0x8D] = function() {
+}
+decode[0x8E] = function() {
+}
+decode[0xCE] = function() {
+}
 
 // SUB
 
-decode[0x97] = function() {}
-decode[0x90] = function() {}
-decode[0x91] = function() {}
-decode[0x92] = function() {}
-decode[0x93] = function() {}
-decode[0x94] = function() {}
-decode[0x95] = function() {}
-decode[0x96] = function() {}
-decode[0xD6] = function() {}
+decode[0x97] = function() {
+}
+decode[0x90] = function() {
+}
+decode[0x91] = function() {
+}
+decode[0x92] = function() {
+}
+decode[0x93] = function() {
+}
+decode[0x94] = function() {
+}
+decode[0x95] = function() {
+}
+decode[0x96] = function() {
+}
+decode[0xD6] = function() {
+}
 
 // SBC
 
-decode[0x9F] = function() {}
-decode[0x98] = function() {}
-decode[0x99] = function() {}
-decode[0x9A] = function() {}
-decode[0x9B] = function() {}
-decode[0x9C] = function() {}
-decode[0x9D] = function() {}
-decode[0x9E] = function() {}
-decode[0xEE] = function() {}
+decode[0x9F] = function() {
+}
+decode[0x98] = function() {
+}
+decode[0x99] = function() {
+}
+decode[0x9A] = function() {
+}
+decode[0x9B] = function() {
+}
+decode[0x9C] = function() {
+}
+decode[0x9D] = function() {
+}
+decode[0x9E] = function() {
+}
+decode[0xEE] = function() {
+}
 
 decode[0xDE] = function() { // SBC A,#
 }
