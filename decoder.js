@@ -604,7 +604,218 @@ decode[0x1B] = function() {}
 decode[0x2B] = function() {}
 decode[0x3B] = function() {}
 
+// DAA Page 95
+
+decode[0x27] = function() {}
+
+// CPL
+
+decode[0x2F] = function() {}
+
+// CCF
+
+decode[0x3F] = function() {}
+
+// SCF
+
+decode[0x37] = function() {}
+
+// HALT
+
+decode[0x76] = function() {}
+
+// STOP
+
+decode[0x10] = function() {}
+
+// DI
+
+decode[0xF3] = function() {}
+
+// EI
+
+decode[0xFB] = function() {}
+
+// RLCA
+
+decode[0x07] = function() {}
+
+// RLA
+
+decode[0x17] = function() {}
+
+// RRCA
+
+decode[0x0F] = function() {}
+
+// RRA
+
+decode[0x1F] = function() {}
+
+// Jumps Page 111
+
+// JP nn
+
+0xC3
+
+// JP cc,nn
+
+C2
+CA
+D2
+DA
+
+// JP (HL)
+
+E9
+
+// JR n
+
+18
+
+// JR cc,n
+
+20
+28
+30
+38
+
+// Calls
+
+// CALL nn
+
+CD
+
+
+
+
+
+
 // Prefix CB
+
+// SWAP n
+
+CBdecode[0x37] = function() {}
+CBdecode[0x30] = function() {}
+CBdecode[0x31] = function() {}
+CBdecode[0x32] = function() {}
+CBdecode[0x33] = function() {}
+CBdecode[0x34] = function() {}
+CBdecode[0x35] = function() {}
+CBdecode[0x36] = function() {}
+
+// RLC 
+
+CBdecode[0x07] = function() {}
+CBdecode[0x00] = function() {}
+CBdecode[0x01] = function() {}
+CBdecode[0x02] = function() {}
+CBdecode[0x03] = function() {}
+CBdecode[0x04] = function() {}
+CBdecode[0x05] = function() {}
+CBdecode[0x06] = function() {}
+
+// RL
+
+CBdecode[0x17] = function() {}
+CBdecode[0x10] = function() {}
+CBdecode[0x11] = function() {}
+CBdecode[0x12] = function() {}
+CBdecode[0x13] = function() {}
+CBdecode[0x14] = function() {}
+CBdecode[0x15] = function() {}
+CBdecode[0x16] = function() {}
+
+// RRC Page 103
+
+CBdecode[0x0F] = function() {}
+CBdecode[0x08] = function() {}
+CBdecode[0x09] = function() {}
+CBdecode[0x0A] = function() {}
+CBdecode[0x0B] = function() {}
+CBdecode[0x0C] = function() {}
+CBdecode[0x0D] = function() {}
+CBdecode[0x0E] = function() {}
+
+// RR n
+
+CBdecode[0x1F] = function() {}
+CBdecode[0x18] = function() {}
+CBdecode[0x19] = function() {}
+CBdecode[0x1A] = function() {}
+CBdecode[0x1B] = function() {}
+CBdecode[0x1C] = function() {}
+CBdecode[0x1D] = function() {}
+CBdecode[0x1E] = function() {}
+
+// SLA n
+
+CBdecode[0x27] = function() {}
+CBdecode[0x20] = function() {}
+CBdecode[0x21] = function() {}
+CBdecode[0x22] = function() {}
+CBdecode[0x23] = function() {}
+CBdecode[0x24] = function() {}
+CBdecode[0x25] = function() {}
+CBdecode[0x26] = function() {}
+
+//SRA n
+
+CBdecode[0x2F] = function() {}
+CBdecode[0x28] = function() {}
+CBdecode[0x29] = function() {}
+CBdecode[0x2A] = function() {}
+CBdecode[0x2B] = function() {}
+CBdecode[0x2C] = function() {}
+CBdecode[0x2D] = function() {}
+CBdecode[0x2E] = function() {}
+
+// SRL n Page 107
+
+CBdecode[0x3F] = function() {}
+CBdecode[0x38] = function() {}
+CBdecode[0x39] = function() {}
+CBdecode[0x3A] = function() {}
+CBdecode[0x3B] = function() {}
+CBdecode[0x3C] = function() {}
+CBdecode[0x3D] = function() {}
+CBdecode[0x3E] = function() {}
+
+// BIT b, r
+
+CBdecode[0x47] = function() {}
+CBdecode[0x40] = function() {}
+CBdecode[0x41] = function() {}
+CBdecode[0x42] = function() {}
+CBdecode[0x43] = function() {}
+CBdecode[0x44] = function() {}
+CBdecode[0x45] = function() {}
+CBdecode[0x46] = function() {}
+
+// SET b, r
+
+CBdecode[0xC7] = function() {}
+CBdecode[0xC0] = function() {}
+CBdecode[0xC1] = function() {}
+CBdecode[0xC2] = function() {}
+CBdecode[0xC3] = function() {}
+CBdecode[0xC4] = function() {}
+CBdecode[0xC5] = function() {}
+CBdecode[0xC6] = function() {}
+
+// RES b, r
+
+CBdecode[0x87] = function() {}
+CBdecode[0x80] = function() {}
+CBdecode[0x81] = function() {}
+CBdecode[0x82] = function() {}
+CBdecode[0x83] = function() {}
+CBdecode[0x84] = function() {}
+CBdecode[0x85] = function() {}
+CBdecode[0x86] = function() {}
+
+// End CB Prefix
+
 
 
 
