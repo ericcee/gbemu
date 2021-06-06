@@ -1,4 +1,3 @@
-var decode = new Array(256);
 
 var memory = new Array(0xFFFF);
 
@@ -33,7 +32,19 @@ reg[BC] = 0x0013;
 reg[DE] = 0x00D8;
 reg[HL] = 0x014D;
 reg[SP] = 0xFFFE;
-reg[PC] = 0x100;
+reg[PC] = 0x0100;
+
+var notImplemented = function(code) {
+    console.log(code + " opcode not implemented.");
+}
+
+var decode = new Array(0xFF);
+var CBdecode = new Array(0xFF);
+
+for(var i = 0; i < 0xFF; i++){
+    decode[i] = function() { notImplemented(i); }
+    CBdecode[i] = function() { notImplemented(i); }
+}
 
 
 var getByteRegister = function(r1) {
@@ -86,7 +97,7 @@ var getFlag = function(fl){
 
 function LDRN(r1) {
     reg[PC]++;
-    var immediate = memory[PC];
+    var immediate = readMem(PC);
     reg[PC]++;
     setByteRegister(r1, immediate);
     return 8;
@@ -100,32 +111,32 @@ function LDRR(r1,r2){
 
 function LDRD(r1, dr) {
     var addr = reg[dr];
-    setByteRegister(r1, memory[addr]);
+    setByteRegister(r1, readMem(addr));
     reg[PC]++;
     return 4;
 }
 
 function LDRAD(r1) {
     reg[PC]++;
-    var n1 = memory[PC];
+    var n1 = readMem(PC);
     reg[PC]++;
-    var n2 = memory[PC];
+    var n2 = readMem(PC);
     var fus = (n2 << 8) | n1;
     setByteRegister(A, memory[fus]);
     return 16;
 }
 
 var LDWADR = function(w1, r1){
-    memory[reg[w1]] = getByteRegister(r1);
+    writeMem(reg[w1], getByteRegister(r1));
     reg[PC]++;
     return 8;
 }
 
 var LDIADR = function(r1) {
     reg[PC]++;
-    var n1 = memory[PC];
+    var n1 = readMem(PC);
     reg[PC]++;
-    var n2 = memory[PC];
+    var n2 = readMem(PC);
     var fus = (n2 << 8) | n1;
     setByteRegister(r1, fus);
     return 16;
@@ -133,15 +144,15 @@ var LDIADR = function(r1) {
 
 var LDWADI = function(w1){
     reg[PC]++;
-    var num = memory[PC];
+    var num = readMem(PC);
     reg[PC]++;
-    memory[reg[w1]] = num;
+    writeMem(reg[w1], num);
     return 12;
 }
 
 var LDROR = function(r1, o1) {
     var vo1 = getByteRegister(o1);
-    setByteRegister(r1, memory[vo1+0xFF00]);
+    setByteRegister(r1, readMem(vo1+0xFF00));
     reg[PC]++;
     return 12;
 }
@@ -149,7 +160,7 @@ var LDROR = function(r1, o1) {
 var LDORR = function(o1, r1) {
     var rv = getByteRegister(r1);
     var ov = getByteRegister(o1);
-    memory[oxFF00+ov] = rv;
+    writeMem(oxFF00+ov, rv);
     reg[PC]++;
     return 12;
 }
@@ -432,10 +443,175 @@ decode[0x31] = function() { // LD SP,nn
 decode[0xF9] = function() { // LD SP,HL
 }
 
+decode[0xF8] = function() { // LDHL SP,n
+}
+
+decode[0x08] = function() { // LD nn,SP
+}
+
+// PUSH Instruction
+
+decode[0xF5] = function() { // PUSH AF
+}
+decode[0xC5] = function() { // PUSH BC
+}
+decode[0xD5] = function() { // PUSH DE
+}
+decode[0xE5] = function() { // PUSH HL
+}
+
+// POP Instruction
+
+decode[0xF1] = function() { // POP AF
+}
+decode[0xC1] = function() { // POP BC
+}
+decode[0xD1] = function() { // POP DE
+}
+decode[0xE1] = function() { // POP HL
+}
+
+// Arithmetic
+
+// ADD page 80
+
+decode[0x87] = function() {}
+decode[0x80] = function() {}
+decode[0x81] = function() {}
+decode[0x82] = function() {}
+decode[0x83] = function() {}
+decode[0x84] = function() {}
+decode[0x85] = function() {}
+decode[0x86] = function() {}
+decode[0xC6] = function() {}
+
+// ADC
+
+decode[0x8F] = function() {}
+decode[0x88] = function() {}
+decode[0x89] = function() {}
+decode[0x8A] = function() {}
+decode[0x8B] = function() {}
+decode[0x8C] = function() {}
+decode[0x8D] = function() {}
+decode[0x8E] = function() {}
+decode[0xCE] = function() {}
+
+// SUB
+
+decode[0x97] = function() {}
+decode[0x90] = function() {}
+decode[0x91] = function() {}
+decode[0x92] = function() {}
+decode[0x93] = function() {}
+decode[0x94] = function() {}
+decode[0x95] = function() {}
+decode[0x96] = function() {}
+decode[0xD6] = function() {}
+
+// SBC
+
+decode[0x9F] = function() {}
+decode[0x98] = function() {}
+decode[0x99] = function() {}
+decode[0x9A] = function() {}
+decode[0x9B] = function() {}
+decode[0x9C] = function() {}
+decode[0x9D] = function() {}
+decode[0x9E] = function() {}
+decode[0xEE] = function() {}
+
+// AND
+
+decode[0xA7] = function() {}
+decode[0xA0] = function() {}
+decode[0xA1] = function() {}
+decode[0xA2] = function() {}
+decode[0xA3] = function() {}
+decode[0xA4] = function() {}
+decode[0xA5] = function() {}
+decode[0xA6] = function() {}
+decode[0xE6] = function() {}
+
+// OR
+
+decode[0xB7] = function() {}
+decode[0xB0] = function() {}
+decode[0xB1] = function() {}
+decode[0xB2] = function() {}
+decode[0xB3] = function() {}
+decode[0xB4] = function() {}
+decode[0xB5] = function() {}
+decode[0xB6] = function() {}
+decode[0xF6] = function() {}
+
+// XOR
+
+decode[0xBF] = function() {}
+decode[0xB8] = function() {}
+decode[0xB9] = function() {}
+decode[0xBA] = function() {}
+decode[0xBB] = function() {}
+decode[0xBC] = function() {}
+decode[0xBD] = function() {}
+decode[0xBE] = function() {}
+decode[0xFE] = function() {}
+
+// INC
+
+decode[0x3C] = function() {}
+decode[0x04] = function() {}
+decode[0x0C] = function() {}
+decode[0x14] = function() {}
+decode[0x1C] = function() {}
+decode[0x24] = function() {}
+decode[0x2C] = function() {}
+decode[0x34] = function() {}
+
+// DEC
+
+decode[0x3D] = function() {}
+decode[0x05] = function() {}
+decode[0x0D] = function() {}
+decode[0x15] = function() {}
+decode[0x1D] = function() {}
+decode[0x25] = function() {}
+decode[0x2D] = function() {}
+decode[0x35] = function() {}
+
+// ADD HL,n
+
+decode[0x09] = function() {}
+decode[0x19] = function() {}
+decode[0x29] = function() {}
+decode[0x39] = function() {}
+
+// ADD SP,n
+
+decode[0xE8] = function() {}
+
+// INC nn
+
+decode[0x03] = function() {}
+decode[0x13] = function() {}
+decode[0x23] = function() {}
+decode[0x33] = function() {}
+
+// DEC nn
+
+decode[0x0B] = function() {}
+decode[0x1B] = function() {}
+decode[0x2B] = function() {}
+decode[0x3B] = function() {}
+
+// Prefix CB
+
+
+
 
 var count = 0;
 for(var i = 0; i < 256; i++){
-    if(decode[i]!=null) count++;
+    if(decode[i]!=false) count++;
 }
 
 console.log(count);
