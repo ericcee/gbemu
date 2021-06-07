@@ -408,8 +408,6 @@ decode[0xE2] = function() { // LD (C),A
     return LDORR(C, A);
 }
 
-// TODO: Implement function shit
-
 decode[0x47] = function() { // LD B,A
     return LDRR(B,A);
 } 
@@ -534,7 +532,7 @@ decode[0x08] = function() { // LD (nn),SP
 }
 
 function gb_push(r16) {
-    reg[SP]-=2;
+    reg[SP] -= 2;
     var re = reg[r16];
     var n1 = re&0xFF;
     var n2 = (re&0xFF00)>>8;
@@ -548,7 +546,7 @@ function gb_pop(r16) {
     var n1 = readMem(reg[SP]);
     var n2 = readMem(reg[SP+1]);
     reg[r16] = (n1<<8)|n1;
-    reg[SP] +=2;
+    reg[SP] += 2;
     reg[PC]++;
     return 12;
 }
@@ -587,89 +585,179 @@ decode[0xE1] = function() { // POP HL
 
 // ADD page 80
 
-decode[0x87] = function() {
+function setFlagsFromNumber(num){
+    if(res > 127) setFlag(_C);
+    if(res < -128) setFlag(_C);
+    if(res < -8) setFlag(_H);
+    if(res > 7) setFlag(_H);
 }
-decode[0x80] = function() {
+
+function addnn(n1,n2,carry,substract){
+    if(carry){
+        if(substract){
+            res = n1-n2+c;
+        }
+        else {
+            res = n1+n2+c;
+        }
+    }
+    else {
+        if(substract){
+            res = n1-n2;
+        }
+        else{
+            res = n1+n2;
+        }
+    }
+    setFlagsFromNumber(res);
+    return res&0xFF;
 }
-decode[0x81] = function() {
+
+function ADD(r1, r2, carry, substract){
+    var n1 = getByteRegister(r1);
+    var n2 = getByteRegister(r2);
+    var c = getFlag(_C);
+    var res = addnn(n1,n2,carry,substract);
+    setByteRegister(r1, res);
+    reg[PC]++;
+    return 4;
 }
-decode[0x82] = function() {
+
+function ADDAADR(carry,substract){
+    var n1 = getByteRegister(A);
+    var n2 = readMem(reg[HL]);
+    var res = addnn(n1,n2,carry,substract);
+    setByteRegister(A,res);
+    reg[PC]++;
+    return 8;
 }
-decode[0x83] = function() {
+
+function ADDAN(carry,substract){
+    var n1 = getByteRegister(A);
+    reg[PC]++;
+    var n2 = readMem(reg[PC]);
+    var res = addnn(n1,n2,carry,substract);
+    setByteRegister(A,res);
+    reg[PC]++;
+    return 8;
 }
-decode[0x84] = function() {
+
+decode[0x87] = function() { // ADD A,A
+    return ADD(A, A, false, false);
 }
-decode[0x85] = function() {
+decode[0x80] = function() { // ADD A,B
+    return ADD(A, B, false, false);
 }
-decode[0x86] = function() {
+decode[0x81] = function() { // ADD A,C
+    return ADD(A, C, false, false);
 }
-decode[0xC6] = function() {
+decode[0x82] = function() { // ADD A,D
+    return ADD(A, D, false, false);
+}
+decode[0x83] = function() { // ADD A,E
+    return ADD(A, E, false, false);
+}
+decode[0x84] = function() { // ADD A,H
+    return ADD(A, H, false, false);
+}
+decode[0x85] = function() { // ADD A,L
+    return ADD(A, L, false, false);
+}
+decode[0x86] = function() { // ADD A,(HL)
+    return ADDAADR(false, false);
+}
+decode[0xC6] = function() { // ADD A,#
+    return ADDAN(false, false);
 }
 
 // ADC
 
-decode[0x8F] = function() {
+decode[0x8F] = function() { // ADC A,A
+    return ADD(A, A, true, false);
 }
-decode[0x88] = function() {
+decode[0x88] = function() { // ADC A,B
+    return ADD(A, B, true, false);
 }
-decode[0x89] = function() {
+decode[0x89] = function() { // ADC A,C
+    return ADD(A, C, true, false);
 }
-decode[0x8A] = function() {
+decode[0x8A] = function() { // ADC A,D
+    return ADD(A, D, true, false);
 }
-decode[0x8B] = function() {
+decode[0x8B] = function() { // ADC A,E
+    return ADD(A, E, true, false);
 }
-decode[0x8C] = function() {
+decode[0x8C] = function() { // ADC A,H
+    return ADD(A, H, true, false);
 }
-decode[0x8D] = function() {
+decode[0x8D] = function() { // ADC A,L
+    return ADD(A, L, true, false);
 }
-decode[0x8E] = function() {
+decode[0x8E] = function() { // ADC A,(HL)
+    return ADDAADR(true, false);
 }
-decode[0xCE] = function() {
+decode[0xCE] = function() { // AC A,#
+    return ADDAN(true, false);
 }
 
 // SUB
 
-decode[0x97] = function() {
+decode[0x97] = function() { // SUB A,A
+    return ADD(A, A, false, true);
 }
-decode[0x90] = function() {
+decode[0x90] = function() { // SUB A,B
+    return ADD(A, B, false, true);
 }
-decode[0x91] = function() {
+decode[0x91] = function() { // SUB A,C
+    return ADD(A, C, false, true);
 }
-decode[0x92] = function() {
+decode[0x92] = function() { // SUB A,D
+    return ADD(A, D, false, true);
 }
-decode[0x93] = function() {
+decode[0x93] = function() { // SUB A,E
+    return ADD(A, E, false, true);
 }
-decode[0x94] = function() {
+decode[0x94] = function() { // SUB A,H
+    return ADD(A, H, false, true);
 }
-decode[0x95] = function() {
+decode[0x95] = function() { // SUB A,L
+    return ADD(A, L, false, true);
 }
-decode[0x96] = function() {
+decode[0x96] = function() { // SUB A,(HL)
+    return ADDAADR(false, true);
 }
-decode[0xD6] = function() {
+decode[0xD6] = function() { // SUB A,#
+    return ADDAN(false, true);
 }
 
 // SBC
 
-decode[0x9F] = function() {
+decode[0x9F] = function() { // SBC A,A
+    return ADD(A, A, true, true);
 }
-decode[0x98] = function() {
+decode[0x98] = function() { // SBC A,B
+    return ADD(A, B, true, true);
 }
-decode[0x99] = function() {
+decode[0x99] = function() { // SBC A,C
+    return ADD(A, C, true, true);
 }
-decode[0x9A] = function() {
+decode[0x9A] = function() { // SBC A,D
+    return ADD(A, D, true, true);
 }
-decode[0x9B] = function() {
+decode[0x9B] = function() { // SBC A,E
+    return ADD(A, E, true, true);
 }
-decode[0x9C] = function() {
+decode[0x9C] = function() { // SBC A,H
+    return ADD(A, H, true, true);
 }
-decode[0x9D] = function() {
+decode[0x9D] = function() { // SBC A,L
+    return ADD(A, L, true, true);
 }
-decode[0x9E] = function() {
+decode[0x9E] = function() { // SBC A,(HL)
+    return ADDAADR(true, true);
 }
-decode[0xEE] = function() {
-}
-
 decode[0xDE] = function() { // SBC A,#
+    return ADDAN(true, true);
 }
 
 
