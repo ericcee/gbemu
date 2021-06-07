@@ -35,7 +35,7 @@ reg[SP] = 0xFFFE;
 reg[PC] = 0x0100;
 
 var notImplemented = function(code) {
-    console.log(code + " opcode not implemented.");
+    console.log("0x"+code.toString(16) + " opcode not implemented.");
 }
 
 var decode = new Array(0xFF);
@@ -843,7 +843,7 @@ function setORFlags(n) {
 function OR(r1) {
     var a = getByteRegister(A);
     var b = getByteRegister(r1);
-    var res = (a&b)&0xFF;
+    var res = (a|b)&0xFF;
     setORFlags(res);
     setByteRegister(A, res);
     reg[PC]++;
@@ -872,52 +872,168 @@ decode[0xB5] = function() { // OR L
     return OR(L);
 }
 decode[0xB6] = function() { // OR (HL) TODO: Implement here
+    var a = getByteRegister(A);
+    var n = readMem(reg[HL]);
+    var res = (a|n)&0xFF;
+    setORFlags(res);
+    setByteRegister(A, res);
+    reg[PC]++;
     return 8;
 }
 decode[0xF6] = function() { // OR #
+    reg[PC]++;
+    var a = getByteRegister(A);
+    var n = readMem(reg[PC]);
+    var res = (a|n)&0xFF;
+    setORFlags(res);
+    setByteRegister(A, res);
+    reg[PC]++;
     return 8;
 }
 
 // XOR
 
+function setXORFlags(n) {
+    if(n==0) setFlag(_Z, 1);
+    else setFlag(_Z, 0);
+    setFlag(_N, 0);
+    setFlag(_C, 0);
+    setFlag(_H, 0);
+}
+
+function XOR(r1) {
+    var a = getByteRegister(A);
+    var b = getByteRegister(r1);
+    var res = (a^b)&0xFF;
+    setXORFlags(res);
+    setByteRegister(A, res);
+    reg[PC]++;
+    return 4;
+}
+
 decode[0xAF] = function() { // XOR A
+    return XOR(A);
 }
 decode[0xA8] = function() { // XOR B
+    return XOR(B);
 }
 decode[0xA9] = function() { // XOR C
+    return XOR(C);
 }
 decode[0xAA] = function() { // XOR D
+    return XOR(D);
 }
 decode[0xAB] = function() { // XOR E
+    return XOR(E);
 }
 decode[0xAC] = function() { // XOR H
+    return XOR(H);
 }
 decode[0xAD] = function() { // XOR L
+    return XOR(L);
 }
 decode[0xAE] = function() { // XOR (HL)
+    var a = getByteRegister(A);
+    var n = readMem(reg[HL]);
+    var res = (a^n)&0xFF;
+    setORFlags(res);
+    setByteRegister(A, res);
+    reg[PC]++;
+    return 8;
 }
 decode[0xEE] = function() { // XOR #
+    reg[PC]++;
+    var a = getByteRegister(A);
+    var n = readMem(reg[PC]);
+    var res = (a^n)&0xFF;
+    setORFlags(res);
+    setByteRegister(A, res);
+    reg[PC]++;
+    return 8;
 }
 
 // CP
 
-decode[0xBF] = function() {
+function compare(num){
+    
+    if(num==0){
+        setFlag(_Z, 1);
+        setFlag(_C, 0);
+    }
+    else{
+        setFlag(_Z, 0);
+        if(num<0){
+            setFlag(_C, 1);
+        }
+        else {
+            setFlag(_C, 0);
+        }
+    }
 }
-decode[0xB8] = function() {
+
+function CPab(a,b){
+    var res = a-b;
+    
+    setFlag(_N, 1);
+    setFlag(_H, !!(((a&0x0F) - (b&0x0F)) & 0x10));
+    
+    compare(res&0xFF);
 }
-decode[0xB9] = function() {
+
+function CPr(r1) {
+    var a = getByteRegister(A);
+    var b = getByteRegister(r1);
+    
+    CPab(a,b);
+    
+    reg[PC]++;
+    
+    return 4;
 }
-decode[0xBA] = function() {
+
+function CPhl(){
+    var a = getByteRegister(A);
+    var b = readMem(reg[HL]);
+    CPab(a,b);
+    reg[PC]++;
+    return 8;
 }
-decode[0xBB] = function() {
+
+function CPn(){
+    var a = getByteRegister(A);
+    reg[PC]++;
+    var b = readMem(reg[PC]);
+    CPab(a,b);
+    reg[PC]++;
+    return 8;
 }
-decode[0xBC] = function() {
+
+decode[0xBF] = function() { // CP A
+    return CPr(A);
 }
-decode[0xBD] = function() {
+decode[0xB8] = function() { // CP B
+    return CPr(B);
 }
-decode[0xBE] = function() {
+decode[0xB9] = function() { // CP C
+    return CPr(C);
 }
-decode[0xFE] = function() {
+decode[0xBA] = function() { // CP D
+    return CPr(D);
+}
+decode[0xBB] = function() { // CP E
+    return CPr(E);
+}
+decode[0xBC] = function() { // CP H
+    return CPr(H);
+}
+decode[0xBD] = function() { // CP L
+    return CPr(L);
+}
+decode[0xBE] = function() { // CP (HL)
+    return CPhl();
+}
+decode[0xFE] = function() { // CP #
+    return CPn();
 }
 
 // INC
