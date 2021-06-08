@@ -29,23 +29,26 @@ memory[0x111]=0x64;
 memory[0x112]=0xE5;
 memory[0x113]=0xF1;
 
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
-decode[readMem(reg[PC])]();
+memory[0x114]=0x3e; // ld a,0
+memory[0x115]=0x0;
 
-debugPrint();
+memory[0x116]=0x06; // ld b,0xf7
+memory[0x117]=0xF7;
+
+
+memory[0x118]=0xC6; // add a, n
+memory[0x119]=1;
+memory[0x11A]=0xB8; // cp b
+
+memory[0x11B]=0x20; // jr NZ,n
+memory[0x11C]=0xFD;
+
+
+
+var xi = setInterval(function(){
+    if(readMem(reg[PC])==0) clearInterval(xi);
+    decode[readMem(reg[PC])]();
+    debugPrint();
+    console.log(getByteRegister(A))
+    console.log(getByteRegister(B))
+}, 10);

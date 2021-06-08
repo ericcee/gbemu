@@ -42,7 +42,7 @@ var decode = new Array(0xFF);
 var CBdecode = new Array(0xFF);
 
 for(var i = 0; i < 0xFF; i++){
-    decode[i] = false
+    decode[i] = function() { notImplemented(i); }
     CBdecode[i] = function() { notImplemented(i); }
 }
 
@@ -94,6 +94,14 @@ var setFlag = function(fl, o) {
 
 var getFlag = function(fl){
     return reg[AF] &  0x01 << fl;
+}
+
+function uncomplement(val, bitwidth) {
+    var isnegative = val & (1 << (bitwidth - 1));
+    var boundary = (1 << bitwidth);
+    var minval = -boundary;
+    var mask = boundary - 1;
+    return isnegative ? minval + (val & mask) : val;
 }
 
 function LDRN(r1) {
@@ -583,13 +591,16 @@ decode[0xE1] = function() { // POP HL
 
 // Arithmetic
 
-// ADD page 80
+// ADD
 
-function setFlagsFromNumber(num){ // TODO: Needs Testing
-    if(res > 127) setFlag(_C, 1);
-    if(res < -128) setFlag(_C, 1);
-    if(res < -7) setFlag(_H, 1);
-    if(res > 7) setFlag(_H, 1);
+function setFlagsFromADDAB(a,b,carry,substract){ // TODO: Needs Testing
+    if(!substract)res = a+b;
+    else res = a-b;
+    if(carry) res += getFlag(_C);
+    
+    setFlag(_C, (res > 255 && res < 0));
+    
+    setFlag(_H, !!(((a&0x0F) + (b&0x0F) + getFlag(_C)) & 0x10));
 }
 
 function addnn(n1,n2,carry,substract){
@@ -609,7 +620,7 @@ function addnn(n1,n2,carry,substract){
             res = n1+n2;
         }
     }
-    setFlagsFromNumber(res);
+    setFlagsFromADDAB(n1,n2,carry,substract);
     return res&0xFF;
 }
 
@@ -973,7 +984,6 @@ function compare(num){
 
 function CPab(a,b){
     var res = a-b;
-    
     setFlag(_N, 1);
     setFlag(_H, !!(((a&0x0F) - (b&0x0F)) & 0x10));
     
@@ -982,10 +992,9 @@ function CPab(a,b){
 
 function CPr(r1) {
     var a = getByteRegister(A);
-    var b = getByteRegister(r1);
+    var b = getByteRegister(r1)&0xFF;
     
     CPab(a,b);
-    
     reg[PC]++;
     
     return 4;
@@ -1038,45 +1047,102 @@ decode[0xFE] = function() { // CP #
 
 // INC
 
-decode[0x3C] = function() {
+function setIncFlags(val, i) {
+    var result = val+i;
+    setFlag(_H, !!(((val&0x0F) +i) & 0x10))
+    setFlag(_N, i == -1)
+    setFlag(_Z, ((result & 0xff) == 0))
 }
-decode[0x04] = function() {
+
+function incr(r1,i){
+    var x = getByteRegister(r1);
+    setIncFlags(x,i);
+    var res = x+i;
+    setByteRegister(r1, res&0xFF);
+    reg[PC]++;
 }
-decode[0x0C] = function() {
+
+function inchl(i){
+    reg[PC]++;
+    var x = readMem(reg[PC]);
+    setIncFlags(x,i);
+    var res = x+i;
+    writeMem(reg[PC], res&0xFF);
+    reg[PC]++;
 }
-decode[0x14] = function() {
+
+decode[0x3C] = function() { // INC A
+    return incr(A,1);
 }
-decode[0x1C] = function() {
+decode[0x04] = function() { // INC B
+    return incr(B,1);
 }
-decode[0x24] = function() {
+decode[0x0C] = function() { // INC C
+    return incr(B,1);
 }
-decode[0x2C] = function() {
+decode[0x14] = function() { // INC D
+    return incr(C,1);
 }
-decode[0x34] = function() {
+decode[0x1C] = function() { // INC E
+    return incr(E,1);
+}
+decode[0x24] = function() { // INC H
+    return incr(H,1);
+}
+decode[0x2C] = function() { // INC L
+    return incr(L,1);
+}
+decode[0x34] = function() { // INC (HL)
+    return inchl(1);
 }
 
 // DEC
 
-decode[0x3D] = function() {
+decode[0x3D] = function() { // DEC A
+    return incr(A,-1);
 }
-decode[0x05] = function() {
+decode[0x05] = function() { // DEC B
+    return incr(B,-1);
 }
-decode[0x0D] = function() {
+decode[0x0D] = function() { // DEC C
+    return incr(C,-1);
 }
-decode[0x15] = function() {
+decode[0x15] = function() { // DEC D
+    return incr(D,-1);
 }
-decode[0x1D] = function() {
+decode[0x1D] = function() { // DEC E
+    return incr(E,-1);
 }
-decode[0x25] = function() {
+decode[0x25] = function() { // DEC H
+    return incr(H,-1);
 }
-decode[0x2D] = function() {
+decode[0x2D] = function() { // DEC L
+    return incr(L,-1);
 }
-decode[0x35] = function() {
+decode[0x35] = function() { // DEC (HL)
+    return inchl(-1);
 }
 
 // ADD HL,n
 
+function setADD16Flags(n,b){ // TODO: Fix
+}
+function ADD16(r16){
+    var a = reg[HL];
+    var b = reg[r16];
+    setADD16Flags(a,b);
+    var res = a+b;
+    
+}
+
 decode[0x09] = function() {
+    var n1 = getByteRegister(A);
+    reg[PC]++;
+    var n2 = readMem(reg[PC]);
+    var res = addnn(n1,n2,carry,substract);
+    setByteRegister(A,res);
+    reg[PC]++;
+    return 8;
 }
 decode[0x19] = function() {
 }
@@ -1176,7 +1242,12 @@ decode[0x1F] = function() {
 
 // JP nn
 
-decode[0xC3] = function() {
+decode[0xC3] = function() { // JP
+    var n1 = readMem(++reg[PC]);
+    var n2 = readMem(++reg[PC]);
+    var addr = n2<<8|n1;
+    
+    reg[PC]=addr;
 }
 
 // JP cc,nn
@@ -1202,13 +1273,49 @@ decode[0x18] = function() {
 
 // JR cc,n
 
-decode[0x20] = function() {
+decode[0x20] = function() { // JR NZ,n
+    if(getFlag(_Z)!=1){
+        var n = uncomplement(readMem(reg[PC]+1),8);
+        reg[PC]+=n;
+        return 8;
+    }
+    else {
+        reg[PC]+=2;
+        return 8;
+    }
 }
-decode[0x28] = function() {
+decode[0x28] = function() { // JR Z,n
+    if(getFlag(_Z)==1){
+        var n = uncomplement(readMem(reg[PC]+1),8);
+        reg[PC]+=n;
+        return 8;
+    }
+    else {
+        reg[PC]+=2;
+        return 8;
+    }
 }
-decode[0x30] = function() {
+decode[0x30] = function() { // JR NC,n
+    if(getFlag(_C)!=1){
+        var n = uncomplement(readMem(reg[PC]+1),8);
+        reg[PC]+=n;
+        return 8;
+    }
+    else {
+        reg[PC]+=2;
+        return 8;
+    }
 }
-decode[0x38] = function() {
+decode[0x38] = function() { // JR C,n
+    if(getFlag(_C)==1){
+        var n = uncomplement(readMem(reg[PC]+1),8);
+        reg[PC]+=n;
+        return 8;
+    }
+    else {
+        reg[PC]+=2;
+        return 8;
+    }
 }
 
 // Calls
