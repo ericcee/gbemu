@@ -1371,7 +1371,7 @@ decode[0xC3] = function() { // JP
     var addr = n2<<8|n1;
     
     reg[PC]=addr;
-    return 
+    return 12;
 }
 
 // JP cc,nn
