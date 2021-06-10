@@ -34,6 +34,11 @@ reg[HL] = 0x014D;
 reg[SP] = 0xFFFE;
 reg[PC] = 0x0100;
 
+var halting = false;
+var stopping = false;
+var interruptsDisabled = false;
+
+
 var notImplemented = function(code) {
     console.log("0x"+code.toString(16) + " opcode not implemented.");
 }
@@ -882,7 +887,8 @@ decode[0xB4] = function() { // OR H
 decode[0xB5] = function() { // OR L
     return OR(L);
 }
-decode[0xB6] = function() { // OR (HL) TODO: Implement here
+
+decode[0xB6] = function() { // OR (HL)
     var a = getByteRegister(A);
     var n = readMem(reg[HL]);
     var res = (a|n)&0xFF;
@@ -943,6 +949,7 @@ decode[0xAC] = function() { // XOR H
 decode[0xAD] = function() { // XOR L
     return XOR(L);
 }
+
 decode[0xAE] = function() { // XOR (HL)
     var a = getByteRegister(A);
     var n = readMem(reg[HL]);
@@ -1125,97 +1132,213 @@ decode[0x35] = function() { // DEC (HL)
 
 // ADD HL,n
 
-function setADD16Flags(n,b){ // TODO: Fix
+function setADD16Flags(n,b){
+    var a = (n) >> 8;
+    var c = (b) >> 8;
+    var res = n+b;
+    
+    var c = (res < 0 || res > 0xFFFF);
+    
+    setFlag(_C, c);
+    setFlag(_H,  !!(((a&0x0F) + c&0x0F) + c) & 0x10))
+    
+    return res&0xFFFF;
 }
+
 function ADD16(r16){
     var a = reg[HL];
     var b = reg[r16];
-    setADD16Flags(a,b);
-    var res = a+b;
     
-}
-
-decode[0x09] = function() {
-    var n1 = getByteRegister(A);
+    var res = setADD16Flags(a,b);
+    reg[HL] = res;
     reg[PC]++;
-    var n2 = readMem(reg[PC]);
-    var res = addnn(n1,n2,carry,substract);
-    setByteRegister(A,res);
-    reg[PC]++;
+    if(r16 != SP){
+        SetFlag(_Z,0);
+    }
+    SetFlag(_N,0);
     return 8;
 }
-decode[0x19] = function() {
+
+function ADD16N(r16, n){
+    var a = reg[r16];
+    var b = n;
+    reg[r16] = setADD16Flags(a,b);
 }
-decode[0x29] = function() {
+
+decode[0x09] = function() { // ADD HL,BC
+    return ADD16(BC);
 }
-decode[0x39] = function() {
+decode[0x19] = function() { // ADD HL,DE
+    return ADD16(DE);
+}
+decode[0x29] = function() { // ADD HL,HL
+    return ADD16(HL);
+}
+decode[0x39] = function() { // ADD HL,SP
+    return ADD16(SP);
 }
 
 // ADD SP,n
 
 decode[0xE8] = function() {
+    reg[PC]++;
+    var b = readMem(reg[PC]);
+    reg[PC]++;
+    ADD16N(PC,b);
+    return 16;
 }
 
 // INC nn
 
-decode[0x03] = function() {
+decode[0x03] = function() { // INC BC
+    reg[BC]++;
+    reg[BC]&=0xFFFF;
+    
+    reg[PC]++;
+    return 8;
 }
-decode[0x13] = function() {
+decode[0x13] = function() { // INC DE
+    reg[DE]++;
+    reg[DE]&=0xFFFF;
+    
+    reg[PC]++;
+    return 8;
 }
-decode[0x23] = function() {
+decode[0x23] = function() { // INC HL
+    reg[HL]++;
+    reg[HL]&=0xFFFF;
+    
+    reg[PC]++;
+    return 8;
 }
-decode[0x33] = function() {
+decode[0x33] = function() { // INC SP
+    reg[SP]++;
+    reg[SP]&=0xFFFF;
+    
+    reg[PC]++;
+    return 8;
 }
 
 // DEC nn
 
-decode[0x0B] = function() {
+decode[0x0B] = function() { // DEC BC
+    reg[BC]--;
+    reg[BC]&=0xFFFF;
+    
+    reg[PC]++;
+    return 8;
 }
-decode[0x1B] = function() {
+decode[0x1B] = function() { // DEC DE
+    reg[DE]--;
+    reg[DE]&=0xFFFF;
+    
+    reg[PC]++;
+    return 8;
 }
-decode[0x2B] = function() {
+decode[0x2B] = function() { // DEC HL
+    reg[HL]--;
+    reg[HL]&=0xFFFF;
+    
+    reg[PC]++;
+    return 8;
 }
-decode[0x3B] = function() {
+decode[0x3B] = function() { // DEC SP
+    reg[SP]--;
+    reg[SP]&=0xFFFF;
+    
+    reg[PC]++;
+    return 8;
 }
 
-// DAA Page 95
+// DAA
 
 decode[0x27] = function() {
+    var n = getFlag(_N);
+    var c = getFlag(_C);
+    var h = getFlag(_H);
+    var z = getFlag(_Z);
+    
+    if (n)
+    {
+        if (c) { reg[A] -= 0x60; }
+        if (h) { reg[A] -= 0x06; }
+    }
+    else
+    {
+        if (c || (reg[A] & 0xFF) > 0x99) { reg[A] += 0x60; c = 1; }
+        if (h || (reg[A] & 0x0F) > 0x09) { reg[A] += 0x06; }
+    }
+
+    z = reg[A] == 0;
+    h = 0;
+    
+    setFlag(_C, c);
+    setFlag(_H, h);
+    setFlag(_Z, z);
+    setFlag(_N, n);
+    reg[PC]++;
+    return 4;
 }
 
 // CPL
 
 decode[0x2F] = function() {
+    setFlag(_N, 1);
+    setFlag(_H, 1);
+    reg[PC]++;
+    return 4;
 }
 
 // CCF
 
 decode[0x3F] = function() {
+    setFlag(_N, 0);
+    setFlag(_H, 0);
+    setFlag(_C, getFlag(_C)==0?1:0);
+    reg[PC]++;
+    return 4;
 }
 
 // SCF
 
 decode[0x37] = function() {
+    setFlag(_N, 0);
+    setFlag(_H, 0);
+    setFlag(_C, 1);
+    reg[PC]++;
+    return 4;
 }
 
 // HALT
 
 decode[0x76] = function() {
+    halting = true;
+    reg[PC]++;
+    return 4;
 }
 
 // STOP
 
 decode[0x10] = function() {
+    stopping = true;
+    reg[PC]++;
+    return 4;
 }
 
 // DI
 
 decode[0xF3] = function() {
+    interruptsDisabled = true;
+    reg[PC]++;
+    return 4;
 }
 
 // EI
 
 decode[0xFB] = function() {
+    interruptsDisabled = false;
+    reg[PC]++;
+    return 4;
 }
 
 // RLCA
@@ -1248,6 +1371,7 @@ decode[0xC3] = function() { // JP
     var addr = n2<<8|n1;
     
     reg[PC]=addr;
+    return 
 }
 
 // JP cc,nn
