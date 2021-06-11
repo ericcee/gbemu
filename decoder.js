@@ -41,6 +41,7 @@ var interruptsDisabled = false;
 
 var notImplemented = function(code) {
     console.log("0x"+code.toString(16) + " opcode not implemented.");
+    return "Not implemented.";
 }
 
 var decode = new Array(0xFF);
@@ -176,7 +177,7 @@ var LDROR = function(r1, o1) {
 var LDORR = function(o1, r1) {
     var rv = getByteRegister(r1);
     var ov = getByteRegister(o1);
-    writeMem(oxFF00+ov, rv);
+    writeMem(0xFF00+ov, rv);
     reg[PC]++;
     return 12;
 }
@@ -339,7 +340,7 @@ decode[0x5B] = function() { // LD E,E
     return LDRR(E,E);
 }
 decode[0x5C] = function() { // LD E,H
-    return LDRR(R,H);
+    return LDRR(E,H);
 }
 decode[0x5D] = function() { // LD E,L
     return LDRR(E,L);
@@ -609,6 +610,7 @@ function setFlagsFromADDAB(a,b,carry,substract){ // TODO: Needs Testing
 }
 
 function addnn(n1,n2,carry,substract){
+    var c = getFlag(_C);
     if(carry){
         if(substract){
             res = n1-n2+c;
@@ -1067,6 +1069,7 @@ function incr(r1,i){
     var res = x+i;
     setByteRegister(r1, res&0xFF);
     reg[PC]++;
+    return 4;
 }
 
 function inchl(i){
@@ -1076,6 +1079,7 @@ function inchl(i){
     var res = x+i;
     writeMem(reg[PC], res&0xFF);
     reg[PC]++;
+    return 12;
 }
 
 decode[0x3C] = function() { // INC A
@@ -1140,7 +1144,7 @@ function setADD16Flags(n,b){
     var c = (res < 0 || res > 0xFFFF);
     
     setFlag(_C, c);
-    setFlag(_H,  !!(((a&0x0F) + c&0x0F) + c) & 0x10))
+    setFlag(_H,  !!(((a&0x0F) + c&0x0F) + c) & 0x10)
     
     return res&0xFFFF;
 }
@@ -1153,9 +1157,9 @@ function ADD16(r16){
     reg[HL] = res;
     reg[PC]++;
     if(r16 != SP){
-        SetFlag(_Z,0);
+        setFlag(_Z,0);
     }
-    SetFlag(_N,0);
+    setFlag(_N,0);
     return 8;
 }
 
@@ -1321,7 +1325,7 @@ decode[0x76] = function() {
 
 decode[0x10] = function() {
     stopping = true;
-    reg[PC]++;
+    reg[PC]+=2;
     return 4;
 }
 
@@ -1376,23 +1380,72 @@ decode[0xC3] = function() { // JP
 
 // JP cc,nn
 
-decode[0xC2] = function() {
+decode[0xC2] = function() { // NZ
+    var n1 = readMem(++reg[PC]);
+    var n2 = readMem(++reg[PC]);
+    if(getFlag(_Z)==1){
+        var addr = n2<<8|n1;
+        reg[PC]=addr;
+    }
+    else {
+        reg[PC]++;
+    }
+    return 12;
 }
-decode[0xCA] = function() {
+decode[0xCA] = function() { // Z
+    var n1 = readMem(++reg[PC]);
+    var n2 = readMem(++reg[PC]);
+    if(getFlag(_Z)==0){
+        var addr = n2<<8|n1;
+        reg[PC]=addr;
+    }
+    else {
+        reg[PC]++;
+    }
+    return 12;
 }
-decode[0xD2] = function() {
+decode[0xD2] = function() { // NC
+    var n1 = readMem(++reg[PC]);
+    var n2 = readMem(++reg[PC]);
+    if(getFlag(_C)==1){
+        var addr = n2<<8|n1;
+        reg[PC]=addr;
+    }
+    else {
+        reg[PC]++;
+    }
+    return 12;
 }
-decode[0xDA] = function() {
+decode[0xDA] = function() { // C
+    var n1 = readMem(++reg[PC]);
+    var n2 = readMem(++reg[PC]);
+    if(getFlag(_C)==0){
+        var addr = n2<<8|n1;
+        reg[PC]=addr;
+    }
+    else {
+        reg[PC]++;
+    }
+    return 12;
 }
 
 // JP (HL)
 
 decode[0xE9] = function() {
+    var n1 = readMem(reg[HL]);
+    var n2 = readMem(reg[HL]+1);
+    
+    reg[PC]=n2<<8|n1;
+    
+    return 4;
 }
 
 // JR n
 
 decode[0x18] = function() {
+    var n = uncomplement(readMem(reg[PC]+1),8);
+    reg[PC]+=n;
+    return 8;
 }
 
 // JR cc,n
@@ -1447,57 +1500,123 @@ decode[0x38] = function() { // JR C,n
 // CALL nn
 
 decode[0xCD] = function() {
+    var n1 = readMem(++reg[PC]);
+    var n2 = readMem(++reg[PC]);
+    gb_push(PC);
+    reg[PC]=n2<<8|n1;
+    return 12;
 }
 
 // CALL cc,nn
 
-decode[0xC4] = function() {
+decode[0xC4] = function() { // NZ
+    var n1 = readMem(++reg[PC]);
+    var n2 = readMem(++reg[PC]);
+    
+    if(getFlag(_Z)==1){
+        gb_push(PC);
+        reg[PC]=n2<<8|n1;
+        return 12;
+    }
+    
+    reg[PC]++;
+    return 12;
 }
-decode[0xCC] = function() {
+
+decode[0xCC] = function() { // Z
+    var n1 = readMem(++reg[PC]);
+    var n2 = readMem(++reg[PC]);
+    
+    if(getFlag(_Z)==0){
+        gb_push(PC);
+        reg[PC]=n2<<8|n1;
+        return 12;
+    }
+    
+    reg[PC]++;
+    return 12;
 }
-decode[0xD4] = function() {
+
+decode[0xD4] = function() { // NC
+    var n1 = readMem(++reg[PC]);
+    var n2 = readMem(++reg[PC]);
+    
+    if(getFlag(_C)==1){
+        gb_push(PC);
+        reg[PC]=n2<<8|n1;
+        return 12;
+    }
+    
+    reg[PC]++;
+    return 12;
 }
-decode[0xDC] = function() {
+
+decode[0xDC] = function() { // C
+    var n1 = readMem(++reg[PC]);
+    var n2 = readMem(++reg[PC]);
+    
+    if(getFlag(_C)==0){
+        gb_push(PC);
+        reg[PC]=n2<<8|n1;
+        return 12;
+    }
+    
+    reg[PC]++;
+    return 12;
 }
 
 // RST n
 
-decode[0xC7] = function() {
+decode[0xC7] = function() { // 0x00
+
 }
-decode[0xCF] = function() {
+
+decode[0xCF] = function() { // 0x08
 }
-decode[0xD7] = function() {
+
+decode[0xD7] = function() { // 0x10
 }
-decode[0xDF] = function() {
+
+decode[0xDF] = function() { // 0x18
 }
-decode[0xE7] = function() {
+
+decode[0xE7] = function() { // 0x20
 }
-decode[0xEF] = function() {
+
+decode[0xEF] = function() { // 0x28
 }
-decode[0xF7] = function() {
+
+decode[0xF7] = function() { // 0x30
 }
-decode[0xFF] = function() {
+
+decode[0xFF] = function() { // 0x38
 }
 
 // RET
 
 decode[0xC9] = function() {
+    
 }
 
 // RET cc
 
 decode[0xC0] = function() {
+    
 }
 decode[0xC8] = function() {
+    
 }
 decode[0xD0] = function() {
+    
 }
 decode[0xD8] = function() {
+    
 }
 
 // RETI
 
 decode[0xD9] = function() {
+    
 }
 
 // Prefix CB implementation
@@ -1636,10 +1755,14 @@ CBdecode[0x86] = function() {}
 
 
 
+// Needed for showing whats done. Can be removed.
 
 var count = 0;
 for(var i = 0; i < 256; i++){
-    if(decode[i]!=false) count++;
+    if(decode[i]()==undefined) {
+        count++;
+        console.log(i.toString(16)+" is undefined");
+    }
 }
 
 console.log(count);
@@ -1649,7 +1772,7 @@ console.log("  0 1 2 3 4 5 6 7 8 9 A B C D E F ");
 for(var y = 0; y < 16; y++) {
     instcovered += "0123456789ABCDEF"[y]+' ';
     for(var x = 0; x < 16; x++){
-        if(!decode[y*16+x]){
+        if(decode[y*16+x]()=="Not implemented."){
             instcovered += " |";
         }
         else {
