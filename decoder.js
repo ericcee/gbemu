@@ -1348,21 +1348,85 @@ decode[0xFB] = function() {
 // RLCA
 
 decode[0x07] = function() {
+    var obs = getByteRegister(A) & (0x01<<8);
+    setFlag(_C, obs);
+    var a = (getByteRegister(A)<<1)&0xFF;
+    a |= obs;
+    setByteRegister(A, a);
+    
+    if(a==0){
+        setFlag(_Z, 0);
+    }
+    else {
+        setFlag(_Z, 1);
+    }
+    
+    setFlag(_H, 0);
+    setFlag(_N, 0);
+    reg[PC]++;
+    return 4;
 }
 
 // RLA
 
 decode[0x17] = function() {
+    var obs = getByteRegister(A) & (0x01<<8);
+    setFlag(_C, obs);
+    var a = (getByteRegister(A)<<1)&0xFF;
+    setByteRegister(A, a);
+    if(a==0){
+        setFlag(_Z, 0);
+    }
+    else {
+        setFlag(_Z, 1);
+    }
+    setFlag(_H, 0);
+    setFlag(_N, 0);
+    reg[PC]++;
+    return 4;
 }
 
 // RRCA
 
 decode[0x0F] = function() {
+    var obz = getByteRegister(A) & (0x01);
+    setFlag(_C, obz);
+    var a = (getByteRegister(A)>>1)&0xFF;
+    a |= obz<<8;
+    
+    if(a==0){
+        setFlag(_Z, 0);
+    }
+    else {
+        setFlag(_Z, 1);
+    }
+    
+    setFlag(_H, 0);
+    setFlag(_N, 0);
+    
+    reg[PC]++;
+    return 4;
 }
 
 // RRA
 
 decode[0x1F] = function() {
+    var obz = getByteRegister(A) & (0x01);
+    setFlag(_C, obz);
+    var a = (getByteRegister(A)>>1)&0xFF;
+        
+    if(a==0){
+        setFlag(_Z, 0);
+    }
+    else {
+        setFlag(_Z, 1);
+    }
+    
+    setFlag(_H, 0);
+    setFlag(_N, 0);
+    
+    reg[PC]++;
+    return 4;
 }
 
 // Jumps Page 111
@@ -1568,55 +1632,109 @@ decode[0xDC] = function() { // C
 // RST n
 
 decode[0xC7] = function() { // 0x00
-
+    gb_push(reg[PC]+1);
+    reg[PC] = 0x00;
+    return 32;
 }
 
 decode[0xCF] = function() { // 0x08
+    gb_push(reg[PC]+1);
+    reg[PC] = 0x08;
+    return 32;
 }
 
 decode[0xD7] = function() { // 0x10
+    gb_push(reg[PC]+1);
+    reg[PC] = 0x10;
+    return 32;
 }
 
 decode[0xDF] = function() { // 0x18
+    gb_push(reg[PC]+1);
+    reg[PC] = 0x18;
+    return 32;
 }
 
 decode[0xE7] = function() { // 0x20
+    gb_push(reg[PC]+1);
+    reg[PC] = 0x20;
+    return 32;
 }
 
 decode[0xEF] = function() { // 0x28
+    gb_push(reg[PC]+1);
+    reg[PC] = 0x28;
+    return 32;
 }
 
 decode[0xF7] = function() { // 0x30
+    gb_push(reg[PC]+1);
+    reg[PC] = 0x30;
+    return 32;
 }
 
 decode[0xFF] = function() { // 0x38
+    gb_push(reg[PC]+1);
+    reg[PC] = 0x38;
+    return 32;
 }
 
 // RET
 
 decode[0xC9] = function() {
-    
+    gb_pop(PC);
+    return 8;
 }
 
 // RET cc
 
-decode[0xC0] = function() {
-    
+decode[0xC0] = function() { // NZ
+    if(getFlag(_Z)==1){
+        gb_pop(PC);
+        return 8;
+    }
+    else {
+        reg[PC]++;
+        return 8;
+    }
 }
-decode[0xC8] = function() {
-    
+decode[0xC8] = function() { // Z
+    if(getFlag(_Z)==0){
+        gb_pop(PC);
+        return 8;
+    }
+    else {
+        reg[PC]++;
+        return 8;
+    }
 }
-decode[0xD0] = function() {
-    
+decode[0xD0] = function() { // NC
+    if(getFlag(_C)==1){
+        gb_pop(PC);
+        return 8;
+    }
+    else {
+        reg[PC]++;
+        return 8;
+    }
 }
-decode[0xD8] = function() {
-    
+decode[0xD8] = function() { // C
+    if(getFlag(_C)==0){
+        gb_pop(PC);
+        return 8;
+    }
+    else {
+        reg[PC]++;
+        return 8;
+    }
 }
 
 // RETI
 
 decode[0xD9] = function() {
-    
+    gb_pop(PC);
+    interruptsDisabled = false;
+    return 8;
 }
 
 // Prefix CB implementation
