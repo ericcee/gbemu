@@ -583,16 +583,16 @@ decode[0xE5] = function() { // PUSH HL
 // POP Instruction
 
 decode[0xF1] = function() { // POP AF
-    gb_pop(AF);
+    return gb_pop(AF);
 }
 decode[0xC1] = function() { // POP BC
-    gb_pop(BC);
+    return gb_pop(BC);
 }
 decode[0xD1] = function() { // POP DE
-    gb_pop(DE);
+    return gb_pop(DE);
 }
 decode[0xE1] = function() { // POP HL
-    gb_pop(HL);
+    return gb_pop(HL);
 }
 
 // Arithmetic
@@ -1348,7 +1348,7 @@ decode[0xFB] = function() {
 // RLCA
 
 decode[0x07] = function() {
-    var obs = getByteRegister(A) & (0x01<<8);
+    var obs = getByteRegister(A) & (0x01<<7);
     setFlag(_C, obs);
     var a = (getByteRegister(A)<<1)&0xFF;
     a |= obs;
@@ -1370,7 +1370,7 @@ decode[0x07] = function() {
 // RLA
 
 decode[0x17] = function() {
-    var obs = getByteRegister(A) & (0x01<<8);
+    var obs = getByteRegister(A) & (0x01<<7);
     setFlag(_C, obs);
     var a = (getByteRegister(A)<<1)&0xFF;
     setByteRegister(A, a);
@@ -1392,7 +1392,7 @@ decode[0x0F] = function() {
     var obz = getByteRegister(A) & (0x01);
     setFlag(_C, obz);
     var a = (getByteRegister(A)>>1)&0xFF;
-    a |= obz<<8;
+    a |= obz<<7;
     
     if(a==0){
         setFlag(_Z, 0);
@@ -1744,6 +1744,118 @@ decode[0xCB] = function() {
     var cbcode = readMem(reg[PC]);
     return CBdecode[cbcode]();
 }
+
+const rhl = 10;
+
+function RLC(r8){
+	return function(){
+		if(r8==rhl){}
+		else{}
+	}
+}
+
+function RRC(r8){
+	return function(){
+		if(r8==rhl){}
+		else{}
+	}
+}
+
+function RL(r8) {
+	return function(){
+		if(r8==rhl){}
+		else{}
+	}
+}
+
+function RR(r8) {
+	return function(){
+		if(r8==rhl){}
+		else{}
+	}
+}
+
+function SLA(r8) {
+	return function(){
+		if(r8==rhl){}
+		else{}
+	}
+}
+
+function SRA(r8) {
+	return function(){
+		if(r8==rhl){}
+		else{}
+	}
+}
+
+function SWAP(r8) {
+	return function(){
+		if(r8==rhl){}
+		else{}
+	}
+}
+
+function SRL(r8){
+	return function(){
+		if(r8==rhl){}
+		else{}
+	}
+}
+
+function BIT(n, r8){
+	return function(){
+		var b = readMem(++reg[PC]);
+		if(r8==rhl){
+			var v = readMem(reg[HL]);
+			setFlag(_Z, v&(0x01<<b));
+		}
+		else {
+			var v = getByteRegister(r8);
+			setFlag(_Z, v&(0x01<<b));
+		}
+		setFlag(_N, 0);
+		setFlag(_H, 1);
+		reg[PC]++;
+		return 8;
+	}
+}
+
+function RES(n, r8) {
+	return function(){
+		var b = readMem(++reg[PC]);
+		if(r8==rhl){
+			var v = readMem(reg[HL]);
+			writeMem(reg[HL], v&(~(0x01<<b)));
+		}
+		else {
+			var v = getByteRegister(r8);
+			setByteRegister(r8, v&(~(0x01<<b)));
+		}
+		reg[PC]++;
+	}
+}
+
+function SET(n, r8) {
+	return function(){
+		var b = readMem(++reg[PC]);
+		if(r8==rhl){
+			var v = readMem(reg[HL]);
+			writeMem(reg[HL], v|(0x01<<b));
+		}
+		else {
+			var v = getByteRegister(r8);
+			setByteRegister(r8, v&(0x01<<b));
+		}
+		reg[PC]++;
+		return 8;
+	}
+}
+
+
+
+var seq = [B,C,D,E,H,L,rhl,A];
+var cbp = 0;
 
 // Prefix CB
 
