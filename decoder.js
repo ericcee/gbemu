@@ -1749,114 +1749,160 @@ const rhl = 10;
 
 function RLC(r8){
 	return function(){
-		if(r8==rhl){}
-		else{}
+		if(r8==rhl){
+			
+		}
+		else{
+			
+		}
 	}
 }
 
 function RRC(r8){
 	return function(){
-		if(r8==rhl){}
-		else{}
+		if(r8==rhl){
+			
+		}
+		else{
+			
+		}
 	}
 }
 
 function RL(r8) {
 	return function(){
-		if(r8==rhl){}
-		else{}
+		if(r8==rhl){
+			
+		}
+		else{
+			
+		}
 	}
 }
 
 function RR(r8) {
 	return function(){
-		if(r8==rhl){}
-		else{}
+		if(r8==rhl){
+			
+		}
+		else{
+			
+		}
 	}
 }
 
 function SLA(r8) {
 	return function(){
-		if(r8==rhl){}
-		else{}
+		if(r8==rhl){
+			
+		}
+		else{
+			
+		}
 	}
 }
 
 function SRA(r8) {
 	return function(){
-		if(r8==rhl){}
-		else{}
+		if(r8==rhl){
+			
+		}
+		else{
+			
+		}
 	}
 }
 
 function SWAP(r8) {
 	return function(){
-		if(r8==rhl){}
-		else{}
+		reg[PC]++;
+		if(r8==rhl){
+			var v = readMem(reg[HL]);
+			v = v<<4 | v&0x0F;
+			writeMem(reg[HL],v);
+			return 16;
+		}
+		else{
+			var v = getByteRegister(r8);
+			v = v<<4 | v&0x0F;
+			setByteRegister(r8, v);
+			return 8;
+		}
 	}
 }
 
 function SRL(r8){
 	return function(){
-		if(r8==rhl){}
-		else{}
+		if(r8==rhl){
+			
+		}
+		else{
+			
+		}
 	}
 }
 
 function BIT(n, r8){
 	return function(){
+		
 		var b = readMem(++reg[PC]);
+		setFlag(_N, 0);
+		setFlag(_H, 1);
+		reg[PC]++;
 		if(r8==rhl){
 			var v = readMem(reg[HL]);
 			setFlag(_Z, v&(0x01<<b));
+			return 16;
 		}
 		else {
 			var v = getByteRegister(r8);
 			setFlag(_Z, v&(0x01<<b));
+			return 8;
 		}
-		setFlag(_N, 0);
-		setFlag(_H, 1);
-		reg[PC]++;
-		return 8;
 	}
 }
 
 function RES(n, r8) {
 	return function(){
+		reg[PC]++;
 		var b = readMem(++reg[PC]);
 		if(r8==rhl){
 			var v = readMem(reg[HL]);
 			writeMem(reg[HL], v&(~(0x01<<b)));
+			return 16;
 		}
 		else {
 			var v = getByteRegister(r8);
 			setByteRegister(r8, v&(~(0x01<<b)));
+			return 8;
 		}
-		reg[PC]++;
 	}
 }
 
 function SET(n, r8) {
 	return function(){
+		reg[PC]++;
 		var b = readMem(++reg[PC]);
 		if(r8==rhl){
 			var v = readMem(reg[HL]);
 			writeMem(reg[HL], v|(0x01<<b));
+			return 16;
 		}
 		else {
 			var v = getByteRegister(r8);
 			setByteRegister(r8, v&(0x01<<b));
+			return 8;
 		}
-		reg[PC]++;
-		return 8;
 	}
 }
 
 
 
-var seq = [B,C,D,E,H,L,rhl,A];
+var seq = [B,C,D,E,H,L,rhl,A]; // CB Codes sequence registers
 var cbp = 0;
 
+
+// TODO: For loop to set cb codes Matrix
 // Prefix CB
 
 // SWAP n
