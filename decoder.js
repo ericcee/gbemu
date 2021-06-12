@@ -1816,15 +1816,20 @@ function SRA(r8) {
 function SWAP(r8) {
 	return function(){
 		reg[PC]++;
+        setFlag(_N, 0);
+        setFlag(_H, 0);
+        setFlag(_C, 0);
 		if(r8==rhl){
 			var v = readMem(reg[HL]);
 			v = v<<4 | v&0x0F;
+            setFlag(_Z, v == 0?0:1);
 			writeMem(reg[HL],v);
 			return 16;
 		}
 		else{
 			var v = getByteRegister(r8);
 			v = v<<4 | v&0x0F;
+            setFlag(_Z, v == 0);
 			setByteRegister(r8, v);
 			return 8;
 		}
@@ -1833,11 +1838,25 @@ function SWAP(r8) {
 
 function SRL(r8){
 	return function(){
+        reg[PC]++;
+        setFlag(_N, 0);
+        setFlag(_H, 0);
+        
 		if(r8==rhl){
-			
+			var v = readMem(reg[HL]);
+            setFlag(_C, v&0x01?0:1);
+            v = v>>1;
+            setFlag(_Z, v==0);
+            writeMem(reg[HL], v);
+            return 16;
 		}
 		else{
-			
+			var v = getByteRegister(r8);
+            setFlag(_C, v&0x01?0:1);
+            v = v>>1;
+            setFlag(_Z, v==0);
+            setByteRegister(r8, v);
+            return 8;
 		}
 	}
 }
