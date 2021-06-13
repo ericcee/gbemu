@@ -3,8 +3,9 @@
 **gbemu** is a HTML5 Javascript Gameboy Emulator, currently in development.
 
 TODO:
-- [ ] Add a Opcode decoder
+- [x] Add a Opcode decoder
 	- [ ] Implement a virtual Gameboy Processor
+	- [ ] Debug the decoder/processor
 - [ ] Hardware emulation
 - [ ] Add HTML5 Canvas Screen output.
 - [ ] Make Mobile compatible.
