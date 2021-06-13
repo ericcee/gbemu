@@ -7,6 +7,8 @@ TODO:
 	- [ ] Implement a virtual Gameboy Processor
 	- [ ] Debug the decoder/processor
 - [ ] Hardware emulation
+- [ ] Memory Mapper
+- [ ] Cartrige Reader
 - [ ] Add HTML5 Canvas Screen output.
 - [ ] Make Mobile compatible.
 	- [ ] Implement the Gamepad API
