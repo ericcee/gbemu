@@ -1349,7 +1349,7 @@ decode[0xFB] = function() {
 
 decode[0x07] = function() {
     var obs = getByteRegister(A) & (0x01<<7);
-    setFlag(_C, obs);
+    setFlag(_C, obs==0?0:1);
     var a = (getByteRegister(A)<<1)&0xFF;
     a |= obs;
     setByteRegister(A, a);
@@ -1371,7 +1371,7 @@ decode[0x07] = function() {
 
 decode[0x17] = function() {
     var obs = getByteRegister(A) & (0x01<<7);
-    setFlag(_C, obs);
+    setFlag(_C, obs==0?0:1);
     var a = (getByteRegister(A)<<1)&0xFF;
     setByteRegister(A, a);
     if(a==0){
@@ -1390,7 +1390,7 @@ decode[0x17] = function() {
 
 decode[0x0F] = function() {
     var obz = getByteRegister(A) & (0x01);
-    setFlag(_C, obz);
+    setFlag(_C, obz==0?0:1);
     var a = (getByteRegister(A)>>1)&0xFF;
     a |= obz<<7;
     
@@ -1412,7 +1412,7 @@ decode[0x0F] = function() {
 
 decode[0x1F] = function() {
     var obz = getByteRegister(A) & (0x01);
-    setFlag(_C, obz);
+    setFlag(_C, obz==0?0:1);
     var a = (getByteRegister(A)>>1)&0xFF;
         
     if(a==0){
@@ -1739,76 +1739,162 @@ decode[0xD9] = function() {
 
 // Prefix CB implementation
 
-decode[0xCB] = function() {
-    reg[PC]++;
-    var cbcode = readMem(reg[PC]);
-    return CBdecode[cbcode]();
-}
-
 const rhl = 10;
 
 function RLC(r8){
 	return function(){
+        reg[PC]++;
+        setFlag(_H, 0);
+        setFlag(_N, 0);
 		if(r8==rhl){
-			
+			var v = readMem(reg[HL]);
+            var b = v&(0x01<<7);
+            v=((v<<1)&0xFF)|b;
+            setFlag(_C, b);
+            setFlag(_Z, v==0?0:1);
+            writeMem(reg[HL], v);
+            return 16;
 		}
 		else{
-			
+			var v = getByteRegister(r8);
+            var b = v&(0x01<<7);
+            v=((v<<1)&0xFF)|b;
+            setFlag(_C, b);
+            setFlag(_Z, v==0?0:1);
+            setByteRegister(r8, v);
+            return 8;
 		}
 	}
 }
 
 function RRC(r8){
 	return function(){
+        reg[PC]++;
+        setFlag(_H, 0);
+        setFlag(_N, 0);
+        
 		if(r8==rhl){
-			
+			var v = readMem(reg[HL]);
+            var b = v&(0x01<<7);
+            v= (v>>1) | b;
+            setFlag(_C, b);
+            setFlag(_Z, v==0?0:1);
+            writeMem(reg[HL], v);
+            return 16;
 		}
 		else{
-			
+			var v = getByteRegister(r8);
+            var b = v&(0x01);
+            v= (v>>1) | b;
+            setFlag(_C, b);
+            setFlag(_Z, v==0?0:1);
+            setByteRegister(r8, v);
+            return 8;
 		}
 	}
 }
 
 function RL(r8) {
 	return function(){
+        reg[PC]++;
+        setFlag(_H, 0);
+        setFlag(_N, 0);
+        
 		if(r8==rhl){
-			
+			var v = readMem(reg[HL]);
+            var b = v&(0x01<<7);
+            setFlag(_C, b==0?0:1);
+            v = v<<1;
+            setFlag(_Z, v==0?0:1);
+            writeMem(reg[HL], v);
+            return 16;
 		}
 		else{
-			
+			var v = getByteRegister(r8);
+            var b = v&(0x01<<7);
+            setFlag(_C, b==0?0:1);
+            v = v<<1;
+            setFlag(_Z, v==0?0:1);
+            setByteRegister(r8, v);
+            return 8;
 		}
 	}
 }
 
 function RR(r8) {
 	return function(){
+        reg[PC]++;
+        setFlag(_H, 0);
+        setFlag(_N, 0);
+        
 		if(r8==rhl){
-			
+			var v = readMem(reg[HL]);
+            var b = v&(0x01);
+            setFlag(_C, b==0?0:1);
+            v = v>>1;
+            setFlag(_Z, v==0?0:1);
+            writeMem(reg[HL], v);
+            return 16;
 		}
 		else{
-			
+			var v = getByteRegister(r8);
+            var b = v&(0x01);
+            setFlag(_C, b==0?0:1);
+            v = v>>1;
+            setFlag(_Z, v==0?0:1);
+            setByteRegister(r8, v);
+            return 8;
 		}
 	}
 }
 
 function SLA(r8) {
 	return function(){
+        reg[PC]++;
+        setFlag(_H, 0);
+        setFlag(_N, 0);
+        
 		if(r8==rhl){
-			
+			var v = readMem(reg[HL]);
+            v = (v<<1)&0xFF;
+            setFlag(_Z, v == 0?0:1);
+            setFlag(_C, b==0?0:1);
+            return 16;
 		}
 		else{
-			
+			var v = getByteRegister(r8);
+            var b = v & (0x01 << 8);
+            v = (v<<1)&0xFF;
+            setFlag(_Z, v == 0?0:1);
+            setFlag(_C, b==0?0:1);
+            return 8;
 		}
 	}
 }
 
 function SRA(r8) {
 	return function(){
+        reg[PC]++;
+        setFlag(_H, 0);
+        setFlag(_N, 0);
+        
 		if(r8==rhl){
-			
+			var v = readMem(reg[HL]);
+            var b = v & 0x01;
+            v = (v >> 1) | (b<<7);
+            setFlag(_Z, v == 0?0:1);
+            setFlag(_C, b == 0?0:1);
+            writeMem(reg[HL], v);
+            return 16;
 		}
 		else{
-			
+			var v = getByteRegister(r8);
+            var b = v & 0x01;
+            v = (v >> 1) | (b<<7);
+            setFlag(_Z, v == 0?0:1);
+            setFlag(_C, b == 0?0:1);
+            setByteRegister(r8, v);
+            return 8;
 		}
 	}
 }
@@ -1819,16 +1905,21 @@ function SWAP(r8) {
         setFlag(_N, 0);
         setFlag(_H, 0);
         setFlag(_C, 0);
+        
+        console.log("SWP");
+        
 		if(r8==rhl){
 			var v = readMem(reg[HL]);
-			v = v<<4 | v&0x0F;
+			v = ((v<<4)&0xFF | (v&0xF0)>>4);
             setFlag(_Z, v == 0?0:1);
 			writeMem(reg[HL],v);
 			return 16;
 		}
 		else{
 			var v = getByteRegister(r8);
-			v = v<<4 | v&0x0F;
+            console.log(v.toString(16))
+			v = ((v<<4)&0xFF | (v&0xF0)>>4);
+            console.log(v.toString(16))
             setFlag(_Z, v == 0);
 			setByteRegister(r8, v);
 			return 8;
@@ -1909,7 +2000,7 @@ function SET(n, r8) {
 		}
 		else {
 			var v = getByteRegister(r8);
-			setByteRegister(r8, v&(0x01<<b));
+			setByteRegister(r8, v|(0x01<<b));
 			return 8;
 		}
 	}
@@ -1918,140 +2009,51 @@ function SET(n, r8) {
 
 
 var seq = [B,C,D,E,H,L,rhl,A]; // CB Codes sequence registers
+var seqf = ["RLC","RRC","RL","RR","SLA","SRA","SWAP","SRL"];
+var ssqf = ["BIT","RES","SET"];
 var cbp = 0;
 
+for(var f = 0; f < seqf.length; f++){
+    for(var r = 0; r < seq.length; r++){
+        switch(seqf[f]){
+            case "RLC": CBdecode[cbp]=RLC(seq[r]); break;
+            case "RRC": CBdecode[cbp]=RRC(seq[r]); break;
+            case "RL": CBdecode[cbp]=RL(seq[r]); break;
+            case "RR": CBdecode[cbp]=RR(seq[r]); break;
+            case "SLA": CBdecode[cbp]=SLA(seq[r]); break;
+            case "SRA": CBdecode[cbp]=SRA(seq[r]); break;
+            case "SWAP": CBdecode[cbp]=SWAP(seq[r]); break;
+            case "SRL": CBdecode[cbp]=SRL(seq[r]); break;
+        }
+        cbp++;
+    }
+}
 
-// TODO: For loop to set cb codes Matrix
-// Prefix CB
+for(var f = 0; f < ssqf.length; f++){
+    for(var r = 0; r < seq.length; r++){
+        for(var b = 0; b < 8; b++){
+            switch(ssqf[f]){
+                case "BIT": CBdecode[cbp]=BIT(seq[r], b); break;
+                case "RES": CBdecode[cbp]=RES(seq[r], b); break;
+                case "SET": CBdecode[cbp]=SET(seq[r], b); break;
+            }
+            cbp++;
+        }
+    }
+}
 
-// SWAP n
-
-CBdecode[0x37] = function() {}
-CBdecode[0x30] = function() {}
-CBdecode[0x31] = function() {}
-CBdecode[0x32] = function() {}
-CBdecode[0x33] = function() {}
-CBdecode[0x34] = function() {}
-CBdecode[0x35] = function() {}
-CBdecode[0x36] = function() {}
-
-// RLC 
-
-CBdecode[0x07] = function() {}
-CBdecode[0x00] = function() {}
-CBdecode[0x01] = function() {}
-CBdecode[0x02] = function() {}
-CBdecode[0x03] = function() {}
-CBdecode[0x04] = function() {}
-CBdecode[0x05] = function() {}
-CBdecode[0x06] = function() {}
-
-// RL
-
-CBdecode[0x17] = function() {}
-CBdecode[0x10] = function() {}
-CBdecode[0x11] = function() {}
-CBdecode[0x12] = function() {}
-CBdecode[0x13] = function() {}
-CBdecode[0x14] = function() {}
-CBdecode[0x15] = function() {}
-CBdecode[0x16] = function() {}
-
-// RRC Page 103
-
-CBdecode[0x0F] = function() {}
-CBdecode[0x08] = function() {}
-CBdecode[0x09] = function() {}
-CBdecode[0x0A] = function() {}
-CBdecode[0x0B] = function() {}
-CBdecode[0x0C] = function() {}
-CBdecode[0x0D] = function() {}
-CBdecode[0x0E] = function() {}
-
-// RR n
-
-CBdecode[0x1F] = function() {}
-CBdecode[0x18] = function() {}
-CBdecode[0x19] = function() {}
-CBdecode[0x1A] = function() {}
-CBdecode[0x1B] = function() {}
-CBdecode[0x1C] = function() {}
-CBdecode[0x1D] = function() {}
-CBdecode[0x1E] = function() {}
-
-// SLA n
-
-CBdecode[0x27] = function() {}
-CBdecode[0x20] = function() {}
-CBdecode[0x21] = function() {}
-CBdecode[0x22] = function() {}
-CBdecode[0x23] = function() {}
-CBdecode[0x24] = function() {}
-CBdecode[0x25] = function() {}
-CBdecode[0x26] = function() {}
-
-//SRA n
-
-CBdecode[0x2F] = function() {}
-CBdecode[0x28] = function() {}
-CBdecode[0x29] = function() {}
-CBdecode[0x2A] = function() {}
-CBdecode[0x2B] = function() {}
-CBdecode[0x2C] = function() {}
-CBdecode[0x2D] = function() {}
-CBdecode[0x2E] = function() {}
-
-// SRL n Page 107
-
-CBdecode[0x3F] = function() {}
-CBdecode[0x38] = function() {}
-CBdecode[0x39] = function() {}
-CBdecode[0x3A] = function() {}
-CBdecode[0x3B] = function() {}
-CBdecode[0x3C] = function() {}
-CBdecode[0x3D] = function() {}
-CBdecode[0x3E] = function() {}
-
-// BIT b, r
-
-CBdecode[0x47] = function() {}
-CBdecode[0x40] = function() {}
-CBdecode[0x41] = function() {}
-CBdecode[0x42] = function() {}
-CBdecode[0x43] = function() {}
-CBdecode[0x44] = function() {}
-CBdecode[0x45] = function() {}
-CBdecode[0x46] = function() {}
-
-// SET b, r
-
-CBdecode[0xC7] = function() {}
-CBdecode[0xC0] = function() {}
-CBdecode[0xC1] = function() {}
-CBdecode[0xC2] = function() {}
-CBdecode[0xC3] = function() {}
-CBdecode[0xC4] = function() {}
-CBdecode[0xC5] = function() {}
-CBdecode[0xC6] = function() {}
-
-// RES b, r
-
-CBdecode[0x87] = function() {}
-CBdecode[0x80] = function() {}
-CBdecode[0x81] = function() {}
-CBdecode[0x82] = function() {}
-CBdecode[0x83] = function() {}
-CBdecode[0x84] = function() {}
-CBdecode[0x85] = function() {}
-CBdecode[0x86] = function() {}
-
-// End CB Prefix
+decode[0xCB] = function() {
+    reg[PC]++;
+    var cbcode = readMem(reg[PC]);
+    return CBdecode[cbcode]();
+}
 
 
+// End Prefix CB
 
 
 // Needed for showing whats done. Can be removed.
-
+/*
 var count = 0;
 for(var i = 0; i < 256; i++){
     if(decode[i]()==undefined) {
@@ -2076,4 +2078,4 @@ for(var y = 0; y < 16; y++) {
     }
     console.log(instcovered);
     instcovered="";
-}
+}*/
