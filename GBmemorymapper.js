@@ -19,6 +19,8 @@ var gb_bios_rom = [0x31, 0xFE, 0xFF, 0xAF, 0x21, 0xFF, 0x9F, 0x32, 0xCB, 0x7C, 0
 var rom_bank0 = [];
 var rom_bankx = [];
 var char_ram = [];
+var hardware_io = new Uint8Array(127);
+
 
 function writeMem(address, b){
     if(address >= 0x0000 && address <= 0x00FF){ // BIOS rom
@@ -57,7 +59,7 @@ function writeMem(address, b){
     }
     
     if(address >= 0xE000 && address <= 0xFDFF){ // Reserved Area/Echo RAM
-        
+        writeMem(address - 0xE000 + 0xC000, b);
     }
     
     if(address >= 0xFE00 && address <= 0xFE9F){ // Object Attribute Memory (OAM)
@@ -69,10 +71,6 @@ function writeMem(address, b){
     }
     
     if(address >= 0xFF00 && address <= 0xFF7F){ // Hardware I/O Registers
-        
-    }
-    
-    if(address >= 0xFF80 && address <= 0FFFE){ // High RAM Area
         
     }
     
@@ -122,7 +120,7 @@ function readMem(address){
     }
     
     if(address >= 0xE000 && address <= 0xFDFF){ // Reserved Area/Echo RAM
-        
+        bytetoreturn = readMem(address - 0xE000 + 0xC000);
     }
     
     if(address >= 0xFE00 && address <= 0xFE9F){ // Object Attribute Memory (OAM)
@@ -134,10 +132,6 @@ function readMem(address){
     }
     
     if(address >= 0xFF00 && address <= 0xFF7F){ // Hardware I/O Registers
-        
-    }
-    
-    if(address >= 0xFF80 && address <= 0FFFE){ // High RAM Area
         
     }
     

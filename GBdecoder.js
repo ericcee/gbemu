@@ -899,6 +899,7 @@ decode[0xB6] = function() { // OR (HL)
     reg[PC]++;
     return 8;
 }
+
 decode[0xF6] = function() { // OR #
     reg[PC]++;
     var a = getByteRegister(A);
@@ -1289,6 +1290,11 @@ decode[0x27] = function() {
 decode[0x2F] = function() {
     setFlag(_N, 1);
     setFlag(_H, 1);
+    
+    var xinv = getByteRegister(_A);
+    xinv ~= xinv;
+    setByteRegister(_A, xinv);
+    
     reg[PC]++;
     return 4;
 }
