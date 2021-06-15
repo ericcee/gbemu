@@ -21,6 +21,61 @@ var rom_bankx = [];
 var char_ram = [];
 var hardware_io = new Uint8Array(127);
 
+// Screen|CPU Register
+var SCY = 0; // 0xFF42
+var SCX = 0; // 0xFF43
+var LY = 0; // 0xFF44
+var LYC = 0; // 0xFF45
+var DMA = 0; // 0xFF46
+var BGP = 0; // 0xFF47
+var OBP0 = 0; // 0xFF48
+var OBP1 = 0; // 0xFF49
+var SB = 0; // 0xFF01
+var SC = 0; // 0xFF02
+var DIV = 0; // 0xFF04
+var TIMA = 0; // 0xFF05
+var TMA = 0; // 0xFF06
+var TAC = 0; // 0xFF07
+var WY = 0; // 0xFF4A
+var WX = 0; // 0xFF4B
+
+
+// Audio Register
+var NR10 = 0; // 0xFF10
+var NR11 = 0; // 0xFF11
+var NR12 = 0; // 0xFF12
+var NR13 = 0; // 0xFF13
+var NR14 = 0; // 0xFF14
+var NR21 = 0; // 0xFF16
+var NR22 = 0; // 0xFF17
+var NR23 = 0; // 0xFF18
+var NR24 = 0; // 0xFF19 
+var NR30 = 0; // 0xFF1A
+var NR31 = 0; // 0xFF1B
+var NR32 = 0 // 0xFF1C
+var NR33 = 0; // 0xFF1D
+var NR34 = 0; // 0xFF1E
+var NR41 = 0; // 0xFF20
+var NR42 = 0; // 0xFF21
+var NR42_2 = 0; // 0xFF22
+var NR43 = 0; // 0xFF23
+var NR50 = 0; // 0xFF24
+var NR51 = 0; // 0xFF26
+var NR52 = 0; // 0xFF25
+
+
+
+
+var InterruptRegister = 0; // 0xFFFF
+
+
+/*
+  00001  =  VBlank
+  00010  =  STAT
+  00100  =  Timer
+  01000  =  Serial
+  10000  =  JoyPad
+*/
 
 function writeMem(address, b){
     if(address >= 0x0000 && address <= 0x00FF){ // BIOS rom
@@ -71,14 +126,52 @@ function writeMem(address, b){
     }
     
     if(address >= 0xFF00 && address <= 0xFF7F){ // Hardware I/O Registers
-        
+        switch(address){
+            case 0xFF42: SCY = b; break; // Screen | CPU
+            case 0xFF43: SCX = b; break;
+            case 0xFF44: LY = b; break;
+            case 0xFF45: LYC = b; break;
+            case 0xFF46: DMA = b; break;
+            case 0xFF47: BGP = b; break;
+            case 0xFF48: OBP0 = b; break;
+            case 0xFF49: OBP1 = b; break;
+            case 0xFF01: SB = b; break;
+            case 0xFF02: SC = b; break;
+            case 0xFF04: DIV = b; break;
+            case 0xFF05: TIMA = b; break;
+            case 0xFF06: TMA = b; break;
+            case 0xFF07: TAC = b; break;
+            case 0xFF4A: WY = b; break;
+            case 0xFF4B: WX = b; break;
+            case 0xFF10: NR10 = b; break; // Audio
+            case 0xFF11: NR11 = b; break; // 0xFF11
+            case 0xFF12: NR12 = b; break; // 0xFF12
+            case 0xFF13: NR13 = b; break; // 0xFF13
+            case 0xFF14: NR14 = b; break; // 0xFF14
+            case 0xFF16: NR21 = b; break; // 0xFF16
+            case 0xFF17: NR22 = b; break; // 0xFF17
+            case 0xFF18: NR23 = b; break; // 0xFF18
+            case 0xFF19: NR24 = b; break; // 0xFF19 
+            case 0xFF1A: NR30 = b; break; // 0xFF1A
+            case 0xFF1B: NR31 = b; break; // 0xFF1B
+            case 0xFF1C: NR32 = b  break;// 0xFF1C
+            case 0xFF1D: NR33 = b; break; // 0xFF1D
+            case 0xFF1E: NR34 = b; break; // 0xFF1E
+            case 0xFF20: NR41 = b; break; // 0xFF20
+            case 0xFF21: NR42 = b; break; // 0xFF21
+            case 0xFF22: NR42_2 = b; break; // 0xFF22
+            case 0xFF23: NR43 = b; break; // 0xFF23
+            case 0xFF24: NR50 = b; break; // 0xFF24
+            case 0xFF26: NR51 = b; break; // 0xFF26
+            case 0xFF25: NR52 = b; break; // 0xFF25
+        }
     }
     
     if(address >= 0xFF80 && address <= 0FFFE){ // High RAM Area
         
     }
     
-    if(address == 0xFFFF) interruptsDisabled = b==0?0:1;
+    if(address == 0xFFFF) InterruptRegister = b;
 }
 
 function readMem(address){
@@ -132,6 +225,13 @@ function readMem(address){
     }
     
     if(address >= 0xFF00 && address <= 0xFF7F){ // Hardware I/O Registers
+        if(adress == 0xFF0F) {
+            bytetoreturn = interruptsDisabled?1:0;
+        }
+        
+        if(address == 0xFF24) // AUDVOL
+        {
+        }
         
     }
     
@@ -139,7 +239,7 @@ function readMem(address){
         
     }
     
-    if(address == 0xFFFF) bytetoreturn = interruptsDisabled?0:1;
+    if(address == 0xFFFF) bytetoreturn = InterruptRegister;
     
     return bytetoreturn&0xFF;
 }
