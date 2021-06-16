@@ -21,52 +21,61 @@ var rom_bankx = [];
 var char_ram = [];
 var hardware_io = new Uint8Array(127);
 
-// Screen|CPU Register
-var SCY = 0; // 0xFF42
-var SCX = 0; // 0xFF43
-var LY = 0; // 0xFF44
-var LYC = 0; // 0xFF45
-var DMA = 0; // 0xFF46
-var BGP = 0; // 0xFF47
-var OBP0 = 0; // 0xFF48
-var OBP1 = 0; // 0xFF49
-var SB = 0; // 0xFF01
-var SC = 0; // 0xFF02
-var DIV = 0; // 0xFF04
-var TIMA = 0; // 0xFF05
-var TMA = 0; // 0xFF06
-var TAC = 0; // 0xFF07
-var WY = 0; // 0xFF4A
-var WX = 0; // 0xFF4B
-
-
-// Audio Register
-var NR10 = 0; // 0xFF10
-var NR11 = 0; // 0xFF11
-var NR12 = 0; // 0xFF12
-var NR13 = 0; // 0xFF13
-var NR14 = 0; // 0xFF14
-var NR21 = 0; // 0xFF16
-var NR22 = 0; // 0xFF17
-var NR23 = 0; // 0xFF18
-var NR24 = 0; // 0xFF19 
-var NR30 = 0; // 0xFF1A
-var NR31 = 0; // 0xFF1B
-var NR32 = 0 // 0xFF1C
-var NR33 = 0; // 0xFF1D
-var NR34 = 0; // 0xFF1E
-var NR41 = 0; // 0xFF20
-var NR42 = 0; // 0xFF21
-var NR42_2 = 0; // 0xFF22
-var NR43 = 0; // 0xFF23
-var NR50 = 0; // 0xFF24
-var NR51 = 0; // 0xFF26
-var NR52 = 0; // 0xFF25
-
-
-
-
-var InterruptRegister = 0; // 0xFFFF
+var PAD   = 0; 
+var LCDC  = 0; 
+var STAT  = 0; 
+var BCPD  = 0; 
+var OCPD  = 0; 
+var SCX   = 0; 
+var SCY   = 0; 
+var LY    = 0; 
+var LYC   = 0; 
+var WY    = 0; 
+var WX    = 0; 
+var BGP   = 0; 
+var OBP0  = 0; 
+var OBP1  = 0; 
+var BCPS  = 0; 
+var OCPS  = 0; 
+var VBK   = 0; 
+var DMA   = 0; 
+var HDMA1 = 0; 
+var HDMA2 = 0; 
+var HDMA3 = 0; 
+var HDMA4 = 0; 
+var HDMA5 = 0; 
+var NR10  = 0; 
+var NR11  = 0; 
+var NR12  = 0; 
+var NR13  = 0; 
+var NR14  = 0; 
+var NR21  = 0; 
+var NR22  = 0; 
+var NR23  = 0; 
+var NR24  = 0; 
+var NR30  = 0; 
+var NR31  = 0; 
+var NR32  = 0; 
+var NR33  = 0; 
+var NR34  = 0; 
+var NR41  = 0; 
+var NR42  = 0; 
+var NR43  = 0; 
+var NR44  = 0; 
+var NR50  = 0; 
+var NR51  = 0; 
+var NR52  = 0; 
+var SB    = 0; 
+var SC    = 0; 
+var IF    = 0; 
+var DIV   = 0; 
+var TIMA  = 0; 
+var TAC   = 0; 
+var TMA   = 0; 
+var KEY1  = 0; 
+var RP    = 0; 
+var SVBK  = 0; 
+var IR    = 0;
 
 
 /*
@@ -126,52 +135,76 @@ function writeMem(address, b){
     }
     
     if(address >= 0xFF00 && address <= 0xFF7F){ // Hardware I/O Registers
-        switch(address){
-            case 0xFF42: SCY = b; break; // Screen | CPU
-            case 0xFF43: SCX = b; break;
-            case 0xFF44: LY = b; break;
-            case 0xFF45: LYC = b; break;
-            case 0xFF46: DMA = b; break;
-            case 0xFF47: BGP = b; break;
-            case 0xFF48: OBP0 = b; break;
-            case 0xFF49: OBP1 = b; break;
-            case 0xFF01: SB = b; break;
-            case 0xFF02: SC = b; break;
-            case 0xFF04: DIV = b; break;
-            case 0xFF05: TIMA = b; break;
-            case 0xFF06: TMA = b; break;
-            case 0xFF07: TAC = b; break;
-            case 0xFF4A: WY = b; break;
-            case 0xFF4B: WX = b; break;
-            case 0xFF10: NR10 = b; break; // Audio
-            case 0xFF11: NR11 = b; break; // 0xFF11
-            case 0xFF12: NR12 = b; break; // 0xFF12
-            case 0xFF13: NR13 = b; break; // 0xFF13
-            case 0xFF14: NR14 = b; break; // 0xFF14
-            case 0xFF16: NR21 = b; break; // 0xFF16
-            case 0xFF17: NR22 = b; break; // 0xFF17
-            case 0xFF18: NR23 = b; break; // 0xFF18
-            case 0xFF19: NR24 = b; break; // 0xFF19 
-            case 0xFF1A: NR30 = b; break; // 0xFF1A
-            case 0xFF1B: NR31 = b; break; // 0xFF1B
-            case 0xFF1C: NR32 = b  break;// 0xFF1C
-            case 0xFF1D: NR33 = b; break; // 0xFF1D
-            case 0xFF1E: NR34 = b; break; // 0xFF1E
-            case 0xFF20: NR41 = b; break; // 0xFF20
-            case 0xFF21: NR42 = b; break; // 0xFF21
-            case 0xFF22: NR42_2 = b; break; // 0xFF22
-            case 0xFF23: NR43 = b; break; // 0xFF23
-            case 0xFF24: NR50 = b; break; // 0xFF24
-            case 0xFF26: NR51 = b; break; // 0xFF26
-            case 0xFF25: NR52 = b; break; // 0xFF25
-        }
+      switch(address){
+        case 0xFF00: PAD   = b;  break; // JoyPad
+        case 0xFF40: LCDC  = b;  break; // LCD Control Register
+        case 0xFF41: STAT  = b;  break; // LCD Control Status
+        case 0xFF69: BCPD  = b;  break; // BCPD/BGPD - CGB Mode Only - Background Palette Data
+        case 0xFF6B: OCPD  = b;  break; // OCPD/OBPD - CGB Mode Only - Sprite Palette Data
+        case 0xFF43: SCX   = b;  break; // SCX - Scroll X (R/W)
+        case 0xFF42: SCY   = b;  break; // SCY - Scroll Y (R/W)
+        case 0xFF44: LY    = b;  break; // LY - LCDC Y-Coordinate (R)
+        case 0xFF45: LYC   = b;  break; // LYC - LY Compare (R/W)
+        case 0xFF4A: WY    = b;  break; // WY - Window Y Position (R/W)
+        case 0xFF4B: WX    = b;  break; // WX - Window X Position minus 7 (R/W)
+        case 0xFF47: BGP   = b;  break; // BGP - BG Palette Data (R/W) - Non CGB Mode Only
+        case 0xFF48: OBP0  = b;  break; // OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
+        case 0xFF49: OBP1  = b;  break; // OBP1 - Object Palette 1 Data (R/W) - Non CGB Mode Only
+        case 0xFF68: BCPS  = b;  break; // BCPS/BGPI - CGB Mode Only - Background Palette Index
+        case 0xFF6A: OCPS  = b;  break; // OCPS/OBPI - CGB Mode Only - Sprite Palette Index
+        case 0xFF4F: VBK   = b;  break; // VBK - CGB Mode Only - VRAM Bank
+        case 0xFF46: DMA   = b;  break; // DMA - DMA Transfer and Start Address (W)
+        case 0xFF51: HDMA1 = b;  break; // HDMA1 - CGB Mode Only - New DMA Source, High
+        case 0xFF52: HDMA2 = b;  break; // HDMA2 - CGB Mode Only - New DMA Source, Low
+        case 0xFF53: HDMA3 = b;  break; // HDMA3 - CGB Mode Only - New DMA Destination, High
+        case 0xFF54: HDMA4 = b;  break; // HDMA4 - CGB Mode Only - New DMA Destination, Low
+        case 0xFF55: HDMA5 = b;  break; // HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
+        case 0xFF10: NR10  = b;  break; // NR10 - Channel 1 Sweep register (R/W)
+        case 0xFF11: NR11  = b;  break; // NR11 - Channel 1 Sound length/Wave pattern duty (R/W)
+        case 0xFF12: NR12  = b;  break; // NR12 - Channel 1 Volume Envelope (R/W)
+        case 0xFF13: NR13  = b;  break; // NR13 - Channel 1 Frequency lo (Write Only)
+        case 0xFF14: NR14  = b;  break; // NR14 - Channel 1 Frequency hi (R/W)
+        case 0xFF16: NR21  = b;  break; // NR21 - Channel 2 Sound Length/Wave Pattern Duty (R/W)
+        case 0xFF17: NR22  = b;  break; // NR22 - Channel 2 Volume Envelope (R/W)
+        case 0xFF18: NR23  = b;  break; // NR23 - Channel 2 Frequency lo data (W)
+        case 0xFF19: NR24  = b;  break; // NR24 - Channel 2 Frequency hi data (R/W)
+        case 0xFF1A: NR30  = b;  break; // NR30 - Channel 3 Sound on/off (R/W)
+        case 0xFF1B: NR31  = b;  break; // NR31 - Channel 3 Sound Length
+        case 0xFF1C: NR32  = b;  break; // NR32 - Channel 3 Select output level (R/W)
+        case 0xFF1D: NR33  = b;  break; // NR33 - Channel 3 Frequency's lower data (W)
+        case 0xFF1E: NR34  = b;  break; // NR34 - Channel 3 Frequency's higher data (R/W)
+        case 0xFF20: NR41  = b;  break; // NR41 - Channel 4 Sound Length (R/W)
+        case 0xFF21: NR42  = b;  break; // NR42 - Channel 4 Volume Envelope (R/W)
+        case 0xFF22: NR43  = b;  break; // NR43 - Channel 4 Polynomial Counter (R/W)
+        case 0xFF23: NR44  = b;  break; // NR44 - Channel 4 Counter/consecutive; Inital (R/W)
+        case 0xFF24: NR50  = b;  break; // NR50 - Channel control / ON-OFF / Volume (R/W)
+        case 0xFF25: NR51  = b;  break; // NR51 - Selection of Sound output terminal (R/W)
+        case 0xFF26: NR52  = b;  break; // NR52 - Sound on/off
+        case 0xFF01: SB    = b;  break; // SB - Serial transfer data (R/W)
+        case 0xFF02: SC    = b;  break; // SC - Serial Transfer Control (R/W)
+        case 0xFF0F: IF    = b;  break; // IF Register
+        case 0xFF04: DIV   = b;  break; // DIV - Divider Register (R/W)
+        case 0xFF05: TIMA  = b;  break; // TIMA - Timer counter (R/W)
+        case 0xFF07: TAC   = b;  break; // TAC - Timer Control (R/W)
+        case 0xFF06: TMA   = b;  break; // TMA - Timer Modulo (R/W)
+        case 0xFF4D: KEY1  = b; break; // KEY1 - CGB Mode Only - Prepare Speed Switch
+        case 0xFF56: RP    = b; break; // RP - CGB Mode Only - Infrared Communications Port
+        case 0xFF70: SVBK  = b; break; // SVBK - CGB Mode Only - WRAM Bank
+        case 0xFF6C:   break; // Undocumented (FEh) - Bit 0 (Read/Write) - CGB Mode Only
+        case 0xFF72:   break; // Undocumented (00h) - Bit 0-7 (Read/Write)
+        case 0xFF73:   break; // Undocumented (00h) - Bit 0-7 (Read/Write)
+        case 0xFF74:   break; // Undocumented (00h) - Bit 0-7 (Read/Write) - CGB Mode Only
+        case 0xFF75:   break; // Undocumented (8Fh) - Bit 4-6 (Read/Write)
+        case 0xFF76:   break; // Undocumented (00h) - Always 00h (Read Only)
+        case 0xFF77:   break; // Undocumented (00h) - Always 00h (Read Only)
+      }
     }
     
     if(address >= 0xFF80 && address <= 0FFFE){ // High RAM Area
         
     }
     
-    if(address == 0xFFFF) InterruptRegister = b;
+    if(address == 0xFFFF) IR = b;
 }
 
 function readMem(address){
@@ -225,21 +258,76 @@ function readMem(address){
     }
     
     if(address >= 0xFF00 && address <= 0xFF7F){ // Hardware I/O Registers
-        if(adress == 0xFF0F) {
-            bytetoreturn = interruptsDisabled?1:0;
+        switch(address){
+          case 0xFF00: bytetoreturn =  PAD;    break; // JoyPad
+          case 0xFF40: bytetoreturn =  LCDC;   break; // LCD Control Register
+          case 0xFF41: bytetoreturn =  STAT;   break; // LCD Control Status
+          case 0xFF69: bytetoreturn =  BCPD;   break; // BCPD/BGPD - CGB Mode Only - Background Palette Data
+          case 0xFF6B: bytetoreturn =  OCPD;   break; // OCPD/OBPD - CGB Mode Only - Sprite Palette Data
+          case 0xFF43: bytetoreturn =  SCX;    break; // SCX - Scroll X (R/W)
+          case 0xFF42: bytetoreturn =  SCY;    break; // SCY - Scroll Y (R/W)
+          case 0xFF44: bytetoreturn =  LY;     break; // LY - LCDC Y-Coordinate (R)
+          case 0xFF45: bytetoreturn =  LYC;    break; // LYC - LY Compare (R/W)
+          case 0xFF4A: bytetoreturn =  WY;     break; // WY - Window Y Position (R/W)
+          case 0xFF4B: bytetoreturn =  WX;     break; // WX - Window X Position minus 7 (R/W)
+          case 0xFF47: bytetoreturn =  BGP;    break; // BGP - BG Palette Data (R/W) - Non CGB Mode Only
+          case 0xFF48: bytetoreturn =  OBP0;   break; // OBP0 - Object Palette 0 Data (R/W) - Non CGB Mode Only
+          case 0xFF49: bytetoreturn =  OBP1;   break; // OBP1 - Object Palette 1 Data (R/W) - Non CGB Mode Only
+          case 0xFF68: bytetoreturn =  BCPS;   break; // BCPS/BGPI - CGB Mode Only - Background Palette Index
+          case 0xFF6A: bytetoreturn =  OCPS;   break; // OCPS/OBPI - CGB Mode Only - Sprite Palette Index
+          case 0xFF4F: bytetoreturn =  VBK;    break; // VBK - CGB Mode Only - VRAM Bank
+          case 0xFF46: bytetoreturn =  DMA;    break; // DMA - DMA Transfer and Start Address (W)
+          case 0xFF51: bytetoreturn =  HDMA1;  break; // HDMA1 - CGB Mode Only - New DMA Source, High
+          case 0xFF52: bytetoreturn =  HDMA2;  break; // HDMA2 - CGB Mode Only - New DMA Source, Low
+          case 0xFF53: bytetoreturn =  HDMA3;  break; // HDMA3 - CGB Mode Only - New DMA Destination, High
+          case 0xFF54: bytetoreturn =  HDMA4;  break; // HDMA4 - CGB Mode Only - New DMA Destination, Low
+          case 0xFF55: bytetoreturn =  HDMA5;  break; // HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
+          case 0xFF10: bytetoreturn =  NR10;   break; // NR10 - Channel 1 Sweep register (R/W)
+          case 0xFF11: bytetoreturn =  NR11;   break; // NR11 - Channel 1 Sound length/Wave pattern duty (R/W)
+          case 0xFF12: bytetoreturn =  NR12;   break; // NR12 - Channel 1 Volume Envelope (R/W)
+          case 0xFF13: bytetoreturn =  NR13;   break; // NR13 - Channel 1 Frequency lo (Write Only)
+          case 0xFF14: bytetoreturn =  NR14;   break; // NR14 - Channel 1 Frequency hi (R/W)
+          case 0xFF16: bytetoreturn =  NR21;   break; // NR21 - Channel 2 Sound Length/Wave Pattern Duty (R/W)
+          case 0xFF17: bytetoreturn =  NR22;   break; // NR22 - Channel 2 Volume Envelope (R/W)
+          case 0xFF18: bytetoreturn =  NR23;   break; // NR23 - Channel 2 Frequency lo data (W)
+          case 0xFF19: bytetoreturn =  NR24;   break; // NR24 - Channel 2 Frequency hi data (R/W)
+          case 0xFF1A: bytetoreturn =  NR30;   break; // NR30 - Channel 3 Sound on/off (R/W)
+          case 0xFF1B: bytetoreturn =  NR31;   break; // NR31 - Channel 3 Sound Length
+          case 0xFF1C: bytetoreturn =  NR32;   break; // NR32 - Channel 3 Select output level (R/W)
+          case 0xFF1D: bytetoreturn =  NR33;   break; // NR33 - Channel 3 Frequency's lower data (W)
+          case 0xFF1E: bytetoreturn =  NR34;   break; // NR34 - Channel 3 Frequency's higher data (R/W)
+          case 0xFF20: bytetoreturn =  NR41;   break; // NR41 - Channel 4 Sound Length (R/W)
+          case 0xFF21: bytetoreturn =  NR42;   break; // NR42 - Channel 4 Volume Envelope (R/W)
+          case 0xFF22: bytetoreturn =  NR43;   break; // NR43 - Channel 4 Polynomial Counter (R/W)
+          case 0xFF23: bytetoreturn =  NR44;   break; // NR44 - Channel 4 Counter/consecutive; Inital (R/W)
+          case 0xFF24: bytetoreturn =  NR50;   break; // NR50 - Channel control / ON-OFF / Volume (R/W)
+          case 0xFF25: bytetoreturn =  NR51;   break; // NR51 - Selection of Sound output terminal (R/W)
+          case 0xFF26: bytetoreturn =  NR52;   break; // NR52 - Sound on/off
+          case 0xFF01: bytetoreturn =  SB;     break; // SB - Serial transfer data (R/W)
+          case 0xFF02: bytetoreturn =  SC;     break; // SC - Serial Transfer Control (R/W)
+          case 0xFF0F: bytetoreturn =  IF;     break; // IF Register
+          case 0xFF04: bytetoreturn =  DIV;    break; // DIV - Divider Register (R/W)
+          case 0xFF05: bytetoreturn =  TIMA;   break; // TIMA - Timer counter (R/W)
+          case 0xFF07: bytetoreturn =  TAC;    break; // TAC - Timer Control (R/W)
+          case 0xFF06: bytetoreturn =  TMA;    break; // TMA - Timer Modulo (R/W)
+          case 0xFF4D: bytetoreturn =  KEY1;   break; // KEY1 - CGB Mode Only - Prepare Speed Switch
+          case 0xFF56: bytetoreturn =  RP;     break; // RP - CGB Mode Only - Infrared Communications Port
+          case 0xFF70: bytetoreturn =  SVBK;   break; // SVBK - CGB Mode Only - WRAM Bank
+          case 0xFF6C:    break; // Undocumented (FEh) - Bit 0 (Read/Write) - CGB Mode Only
+          case 0xFF72:    break; // Undocumented (00h) - Bit 0-7 (Read/Write)
+          case 0xFF73:    break; // Undocumented (00h) - Bit 0-7 (Read/Write)
+          case 0xFF74:    break; // Undocumented (00h) - Bit 0-7 (Read/Write) - CGB Mode Only
+          case 0xFF75:    break; // Undocumented (8Fh) - Bit 4-6 (Read/Write)
+          case 0xFF76:    break; // Undocumented (00h) - Always 00h (Read Only)
+          case 0xFF77:    break; // Undocumented (00h) - Always 00h (Read Only)
         }
-        
-        if(address == 0xFF24) // AUDVOL
-        {
-        }
-        
     }
     
     if(address >= 0xFF80 && address <= 0FFFE){ // High RAM Area
         
     }
     
-    if(address == 0xFFFF) bytetoreturn = InterruptRegister;
+    if(address == 0xFFFF) bytetoreturn = IR;
     
     return bytetoreturn&0xFF;
 }
