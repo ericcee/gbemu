@@ -19,7 +19,6 @@ var gb_bios_rom = [0x31, 0xFE, 0xFF, 0xAF, 0x21, 0xFF, 0x9F, 0x32, 0xCB, 0x7C, 0
 var rom_bank0 = [];
 var rom_bankx = [];
 var char_ram = [];
-var hardware_io = new Uint8Array(127);
 
 var PAD   = 0; 
 var LCDC  = 0; 
@@ -85,6 +84,8 @@ var IR    = 0;
   01000  =  Serial
   10000  =  JoyPad
 */
+
+var wav_ram = new Uint8Array(16);
 
 function writeMem(address, b){
     if(address >= 0x0000 && address <= 0x00FF){ // BIOS rom
@@ -197,7 +198,14 @@ function writeMem(address, b){
         case 0xFF75:   break; // Undocumented (8Fh) - Bit 4-6 (Read/Write)
         case 0xFF76:   break; // Undocumented (00h) - Always 00h (Read Only)
         case 0xFF77:   break; // Undocumented (00h) - Always 00h (Read Only)
+        default: 
+            if(address >= 0xFF30 && address <= 0xFF3F){
+                wav_ram[address - 0xFF30] = b;
+            }
+            break;
       }
+      
+      
     }
     
     if(address >= 0xFF80 && address <= 0FFFE){ // High RAM Area
@@ -320,6 +328,17 @@ function readMem(address){
           case 0xFF75:    break; // Undocumented (8Fh) - Bit 4-6 (Read/Write)
           case 0xFF76:    break; // Undocumented (00h) - Always 00h (Read Only)
           case 0xFF77:    break; // Undocumented (00h) - Always 00h (Read Only)
+           default: 
+            if(address >= 0xFF30 && address <= 0xFF3F){
+                bytetoreturn = wav_ram[address - 0xFF30];
+            }
+            else {
+                bytetoreturn = wav_ram[address - 0xFF30];
+            }
+            break;
+        }
+        
+        if(address >= 0xFF30 && address <= 0xFF3F){
         }
     }
     
