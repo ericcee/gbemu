@@ -2,8 +2,8 @@
 // stopping
 // interruptsDisabled
 
-var hz = 4190000;
-var sc = 1/hz;
+var hz = 4190000; // GameBoy Frequenzy
+var sc = 1/hz; // Seconds
 
 function getEmulatedCyclefreqDiff(){
     var emulatedSeconds = 0;
@@ -26,10 +26,15 @@ function getEmulatedCyclefreqDiff(){
 
 var emCycl = getEmulatedCyclefreqDiff();
 var tmpCycl = emCycl;
+var cyclesToWait = 0;
 
 function cpuCycle() {
     if(emCycl == 0) {
         // Emulated cpu cycle here
+        if(cyclesToWait <= 0){
+            cyclesToWait = decode[readMem(reg[PC])]();
+        }
+        else cyclesToWait--;
         
         emCycl = tmpCycl;
     }
