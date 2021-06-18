@@ -2,7 +2,7 @@
 // stopping
 // interruptsDisabled
 
-var hz = 4190000; // GameBoy Frequenzy
+var hz = 4190000; // GameBoy Frequency
 var sc = 1/hz; // Seconds
 
 function getEmulatedCyclefreqDiff(){
@@ -40,3 +40,5 @@ function cpuCycle() {
     }
     else emCycl --;
 }
+
+function

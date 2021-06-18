@@ -130,7 +130,7 @@ function writeMem(address, b){
     if(address >= 0xFF00 && address <= 0xFF7F){ // Hardware I/O Registers
       switch(address){
         case 0xFF00: PAD   = b;  break; // JoyPad
-        case 0xFF40: LCDC  = b;  break; // LCD Control Register
+        case 0xFF40: LCDC  = b; LCDControl(); break; // LCD Control Register
         case 0xFF41: STAT  = b;  break; // LCD Control Status
         case 0xFF69: BCPD  = b;  break; // BCPD/BGPD - CGB Mode Only - Background Palette Data
         case 0xFF6B: OCPD  = b;  break; // OCPD/OBPD - CGB Mode Only - Sprite Palette Data
@@ -178,7 +178,7 @@ function writeMem(address, b){
         case 0xFF0F: IF    = b;  break; // IF Register
         case 0xFF04: DIV   = b;  break; // DIV - Divider Register (R/W)
         case 0xFF05: TIMA  = b;  break; // TIMA - Timer counter (R/W)
-        case 0xFF07: TAC   = b;  break; // TAC - Timer Control (R/W)
+        case 0xFF07: TAC   = b; TimerControl(); break; // TAC - Timer Control (R/W)
         case 0xFF06: TMA   = b;  break; // TMA - Timer Modulo (R/W)
         case 0xFF4D: KEY1  = b; break; // KEY1 - CGB Mode Only - Prepare Speed Switch
         case 0xFF56: RP    = b; break; // RP - CGB Mode Only - Infrared Communications Port

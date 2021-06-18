@@ -1291,9 +1291,9 @@ decode[0x2F] = function() {
     setFlag(_N, 1);
     setFlag(_H, 1);
     
-    var xinv = getByteRegister(_A);
-    xinv ~= xinv;
-    setByteRegister(_A, xinv);
+    var xinv = getByteRegister(A);
+    xinv = ~xinv;
+    setByteRegister(A, xinv);
     
     reg[PC]++;
     return 4;
@@ -1624,7 +1624,7 @@ decode[0xD4] = function() { // NC
 decode[0xDC] = function() { // C
     var n1 = readMem(++reg[PC]);
     var n2 = readMem(++reg[PC]);
-ÿ   
+    
     if(getFlag(_C)==0){
         gb_push(PC);
         reg[PC]=n2<<8|n1;

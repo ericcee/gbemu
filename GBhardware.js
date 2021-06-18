@@ -41,3 +41,10 @@ const WindowDisplay = 0x01;
 
 
 
+function LCDControl(){
+    
+}
+
+function TimerControl() {
+    
+}
