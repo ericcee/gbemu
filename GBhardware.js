@@ -28,6 +28,16 @@ const INT_SeriIOComplete = 0x0058;
 const INT_TrPinJoyPad = 0x0060;
 
 
+// LCDC Operations
+
+const LCDControlOperation = 0x80;
+const WindowTileMapDisplaySelect = 0x40;
+const WindowDisplay = 0x20;
+const WindowTileDataSelect = 0x10;
+const TileMapDisplaySelect = 0x08;
+const SpriteSize = 0x04;
+const SpriteDisplay = 0x02;
+const WindowDisplay = 0x01;
 
 
 

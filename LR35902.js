@@ -495,7 +495,7 @@ function LDRWN(r16){
     reg[PC]++;
     var n2 = readMem(reg[PC]);
     var cv = (n2<<8)|n1;
-    reg[BC] = cv;
+    reg[r16] = cv;
     reg[PC]++;
     return 12;
 }

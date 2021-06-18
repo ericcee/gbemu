@@ -77,14 +77,6 @@ var SVBK  = 0;
 var IR    = 0;
 
 
-/*
-  00001  =  VBlank
-  00010  =  STAT
-  00100  =  Timer
-  01000  =  Serial
-  10000  =  JoyPad
-*/
-
 var wav_ram = new Uint8Array(16);
 
 function writeMem(address, b){
@@ -204,8 +196,6 @@ function writeMem(address, b){
             }
             break;
       }
-      
-      
     }
     
     if(address >= 0xFF80 && address <= 0FFFE){ // High RAM Area
