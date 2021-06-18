@@ -36,7 +36,7 @@ reg[PC] = 0x0100;
 
 var halting = false;
 var stopping = false;
-var interruptsDisabled = false;
+var IME = true;
 
 
 var notImplemented = function(code) {
@@ -208,7 +208,7 @@ decode[0x2e] = function() { // LD L,n
     return LDRN(L);
 }
 
-// LD r1,r2 put value in r1,r2
+// LD r1,r2 put value r1=r2
 
 decode[0x7f] = function() { // LD A,A
     return LDRR(A, A);
@@ -495,7 +495,7 @@ function LDRWN(r16){
     reg[PC]++;
     var n2 = readMem(reg[PC]);
     var cv = (n2<<8)|n1;
-    reg[BC] = cv;
+    reg[r16] = cv;
     reg[PC]++;
     return 12;
 }
@@ -899,6 +899,7 @@ decode[0xB6] = function() { // OR (HL)
     reg[PC]++;
     return 8;
 }
+
 decode[0xF6] = function() { // OR #
     reg[PC]++;
     var a = getByteRegister(A);
@@ -1289,6 +1290,11 @@ decode[0x27] = function() {
 decode[0x2F] = function() {
     setFlag(_N, 1);
     setFlag(_H, 1);
+    
+    var xinv = getByteRegister(A);
+    xinv = ~xinv;
+    setByteRegister(A, xinv);
+    
     reg[PC]++;
     return 4;
 }
@@ -1332,7 +1338,7 @@ decode[0x10] = function() {
 // DI
 
 decode[0xF3] = function() {
-    interruptsDisabled = true;
+    IME = false;
     reg[PC]++;
     return 4;
 }
@@ -1340,7 +1346,7 @@ decode[0xF3] = function() {
 // EI
 
 decode[0xFB] = function() {
-    interruptsDisabled = false;
+    IME = true;
     reg[PC]++;
     return 4;
 }
@@ -1733,7 +1739,7 @@ decode[0xD8] = function() { // C
 
 decode[0xD9] = function() {
     gb_pop(PC);
-    interruptsDisabled = false;
+    IME = true;
     return 8;
 }
 
@@ -1905,8 +1911,6 @@ function SWAP(r8) {
         setFlag(_N, 0);
         setFlag(_H, 0);
         setFlag(_C, 0);
-        
-        console.log("SWP");
         
 		if(r8==rhl){
 			var v = readMem(reg[HL]);
