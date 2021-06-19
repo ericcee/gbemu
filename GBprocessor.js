@@ -40,5 +40,3 @@ function cpuCycle() {
     }
     else emCycl --;
 }
-
-function

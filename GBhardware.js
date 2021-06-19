@@ -1,4 +1,3 @@
-
 // PAD
 
 const JOY_RIGHT = 0x11;
@@ -13,11 +12,11 @@ const JOY_START = 0x28;
 
 // Interrupt Flag
 
-const VBlank = 0x01;
-const LCDC = 0x02;
-const TimerOverflow = 0x04;
-const SeriIOComplete = 0x08;
-const TrPinJoyPad = 0x10;
+const IF_VBlank = 0x01;
+const IF_LCDC = 0x02;
+const IF_TimerOverflow = 0x04;
+const IF_SeriIOComplete = 0x08;
+const IF_TrPinJoyPad = 0x10;
 
 // GameBoy Interrupt Adresses
 
@@ -37,7 +36,7 @@ const WindowTileDataSelect = 0x10;
 const TileMapDisplaySelect = 0x08;
 const SpriteSize = 0x04;
 const SpriteDisplay = 0x02;
-const WindowDisplay = 0x01;
+//const WindowDisplay = 0x01;
 
 
 
