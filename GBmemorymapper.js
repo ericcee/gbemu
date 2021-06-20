@@ -91,6 +91,8 @@ var IR    = 0;
 
 
 var wav_ram = new Uint8Array(16);
+var high_ram = new Uint8Array(0x7E);
+var work_ram = new Uint8Array(0x1FFF);
 
 function writeMem(address, b){
     if(address >= 0x0000 && address <= 0x00FF){ // BIOS rom
@@ -125,7 +127,7 @@ function writeMem(address, b){
     }
     
     if(address >= 0xC000 && address <= 0xDFFF){ // Internal Work RAM
-        
+        work_ram[address - 0xC000] = b;
     }
     
     if(address >= 0xE000 && address <= 0xFDFF){ // Reserved Area/Echo RAM
@@ -212,7 +214,7 @@ function writeMem(address, b){
     }
     
     if(address >= 0xFF80 && address <= 0xFFFE){ // High RAM Area
-        
+        high_ram[address - 0xFF80] = b;
     }
     
     if(address == 0xFFFF) IR = b;
@@ -253,7 +255,7 @@ function readMem(address){
     }
     
     if(address >= 0xC000 && address <= 0xDFFF){ // Internal Work RAM
-        
+        bytetoreturn = work_ram[address - 0xC000];
     }
     
     if(address >= 0xE000 && address <= 0xFDFF){ // Reserved Area/Echo RAM
@@ -346,7 +348,7 @@ function readMem(address){
     }
     
     if(address >= 0xFF80 && address <= 0xFFFE){ // High RAM Area
-        
+        bytetoreturn = high_ram[address - 0xFF80];
     }
     
     if(address == 0xFFFF) bytetoreturn = IR;

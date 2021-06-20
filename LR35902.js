@@ -463,15 +463,15 @@ decode[0x22] = function() { // LDI (HL),A
     return 8;
 }
 
-decode[0xE0] = function() { // LDH A,(n)
+decode[0xF0] = function() { // LDH (n),A
     reg[PC]++;
     var n = readMem(reg[PC]);
-    setByteRegister(A, readMem(n));
+    setByteRegister(A, readMem(0xFF00 + n));
     reg[PC]++;
     return 12;
 }
 
-decode[0xF0] = function() { // LDH (n),A
+decode[0xE0] = function() { // LDH A,(n)
     reg[PC]++;
     var n = readMem(reg[PC]);
     writeMem(0xFF00+n, getByteRegister(A));
@@ -540,16 +540,16 @@ function gb_push(r16) {
     var re = reg[r16];
     var n1 = re&0xFF;
     var n2 = (re&0xFF00)>>8;
-    writeMem(reg[SP], n2);
-    writeMem(reg[SP+1], n1);
+    writeMem(reg[SP], n1);
+    writeMem(reg[SP]+1, n2);
     reg[PC]++;
     return 16;
 }
 
 function gb_pop(r16) {
     var n1 = readMem(reg[SP]);
-    var n2 = readMem(reg[SP+1]);
-    reg[r16] = (n1<<8)|n1;
+    var n2 = readMem(reg[SP]+1);
+    reg[r16] = (n2<<8)|n1;
     reg[SP] += 2;
     reg[PC]++;
     return 12;
@@ -1253,20 +1253,23 @@ decode[0x27] = function() {
     var h = getFlag(_H);
     var z = getFlag(_Z);
     
+    var a = getByteRegister(A);
+    
     if (n)
     {
-        if (c) { reg[A] -= 0x60; }
-        if (h) { reg[A] -= 0x06; }
+        if (c) { a -= 0x60; }
+        if (h) { a -= 0x06; }
     }
     else
     {
-        if (c || (reg[A] & 0xFF) > 0x99) { reg[A] += 0x60; c = 1; }
-        if (h || (reg[A] & 0x0F) > 0x09) { reg[A] += 0x06; }
+        if (c || (a & 0xFF) > 0x99) { a += 0x60; c = 1; }
+        if (h || (a & 0x0F) > 0x09) { a += 0x06; }
     }
 
-    z = reg[A] == 0;
+    z = a == 0;
     h = 0;
     
+    setByteRegister(A, a);
     setFlag(_C, c?1:0);
     setFlag(_H, h?1:0);
     setFlag(_Z, z?1:0);
@@ -1444,7 +1447,7 @@ decode[0xC3] = function() { // JP
 decode[0xC2] = function() { // NZ
     var n1 = readMem(++reg[PC]);
     var n2 = readMem(++reg[PC]);
-    if(getFlag(_Z)==1){
+    if(getFlag(_Z)==0){
         var addr = n2<<8|n1;
         reg[PC]=addr;
     }
@@ -1456,7 +1459,7 @@ decode[0xC2] = function() { // NZ
 decode[0xCA] = function() { // Z
     var n1 = readMem(++reg[PC]);
     var n2 = readMem(++reg[PC]);
-    if(getFlag(_Z)==0){
+    if(getFlag(_Z)==1){
         var addr = n2<<8|n1;
         reg[PC]=addr;
     }
@@ -1468,7 +1471,7 @@ decode[0xCA] = function() { // Z
 decode[0xD2] = function() { // NC
     var n1 = readMem(++reg[PC]);
     var n2 = readMem(++reg[PC]);
-    if(getFlag(_C)==1){
+    if(getFlag(_C)==0){
         var addr = n2<<8|n1;
         reg[PC]=addr;
     }
@@ -1480,7 +1483,7 @@ decode[0xD2] = function() { // NC
 decode[0xDA] = function() { // C
     var n1 = readMem(++reg[PC]);
     var n2 = readMem(++reg[PC]);
-    if(getFlag(_C)==0){
+    if(getFlag(_C)==1){
         var addr = n2<<8|n1;
         reg[PC]=addr;
     }
@@ -1512,7 +1515,7 @@ decode[0x18] = function() {
 // JR cc,n
 
 decode[0x20] = function() { // JR NZ,n
-    if(getFlag(_Z)!=1){
+    if(getFlag(_Z)==0){
         var n = uncomplement(readMem(++reg[PC]),8);
         reg[PC]+=n+1;
         return 8;
@@ -1534,7 +1537,7 @@ decode[0x28] = function() { // JR Z,n
     }
 }
 decode[0x30] = function() { // JR NC,n
-    if(getFlag(_C)!=1){
+    if(getFlag(_C)==0){
         var n = uncomplement(readMem(++reg[PC]),8);
         reg[PC]+=n+1;
         return 8;
@@ -1563,9 +1566,10 @@ decode[0x38] = function() { // JR C,n
 decode[0xCD] = function() {
     var n1 = readMem(++reg[PC]);
     var n2 = readMem(++reg[PC]);
+    reg[PC]++;
     gb_push(PC);
     reg[PC]=n2<<8|n1;
-    return 12;
+    return 24;
 }
 
 // CALL cc,nn
@@ -1573,56 +1577,52 @@ decode[0xCD] = function() {
 decode[0xC4] = function() { // NZ
     var n1 = readMem(++reg[PC]);
     var n2 = readMem(++reg[PC]);
-    
-    if(getFlag(_Z)==1){
+    reg[PC]++;
+    if(getFlag(_Z)==0){
         gb_push(PC);
         reg[PC]=n2<<8|n1;
-        return 12;
+        return 24;
     }
     
-    reg[PC]++;
     return 12;
 }
 
 decode[0xCC] = function() { // Z
     var n1 = readMem(++reg[PC]);
     var n2 = readMem(++reg[PC]);
-    
-    if(getFlag(_Z)==0){
+    reg[PC]++;
+    if(getFlag(_Z)==1){
         gb_push(PC);
         reg[PC]=n2<<8|n1;
-        return 12;
+        return 24;
     }
     
-    reg[PC]++;
     return 12;
 }
 
 decode[0xD4] = function() { // NC
     var n1 = readMem(++reg[PC]);
     var n2 = readMem(++reg[PC]);
-    
-    if(getFlag(_C)==1){
+    reg[PC]++;
+    if(getFlag(_C)==0){
         gb_push(PC);
         reg[PC]=n2<<8|n1;
-        return 12;
+        return 24;
     }
     
-    reg[PC]++;
     return 12;
 }
 
 decode[0xDC] = function() { // C
     var n1 = readMem(++reg[PC]);
     var n2 = readMem(++reg[PC]);
-    
-    if(getFlag(_C)==0){
+    reg[PC]++;
+    if(getFlag(_C)==1){
         gb_push(PC);
         reg[PC]=n2<<8|n1;
-        return 12;
+        return 24;
     }
     
-    reg[PC]++;
     return 12;
 }
 
