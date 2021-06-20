@@ -89,7 +89,7 @@ var setFlag = function(fl, o) {
 }
 
 var getFlag = function(fl){
-    return reg[AF] &  0x01 << fl;
+    return (reg[AF] &  0x01 << fl) == 0?0:1;
 }
 
 function uncomplement(val, bitwidth) {
@@ -118,7 +118,7 @@ function LDRD(r1, dr) {
     var addr = reg[dr];
     setByteRegister(r1, readMem(addr));
     reg[PC]++;
-    return 4;
+    return 8;
 }
 
 function LDRAD(r1) {
@@ -528,8 +528,8 @@ decode[0x08] = function() { // LD (nn),SP
     var n2sp = (reg[SP]&0xFF00)>>8;
     
     
-    writeMem(cv, n2sp);
-    writeMem(cv+1, n1sp);
+    writeMem(cv+1, n2sp);
+    writeMem(cv, n1sp);
     reg[PC]++;
     
     return 20;
@@ -1344,17 +1344,17 @@ decode[0xFB] = function() {
 // RLCA
 
 decode[0x07] = function() {
-    var obs = getByteRegister(A) & (0x01<<7);
-    setFlag(_C, obs==0?0:1);
+    var obs = (getByteRegister(A) & (0x01<<7))==0?0:1;
+    setFlag(_C, obs);
     var a = (getByteRegister(A)<<1)&0xFF;
     a |= obs;
     setByteRegister(A, a);
     
     if(a==0){
-        setFlag(_Z, 0);
+        setFlag(_Z, 1);
     }
     else {
-        setFlag(_Z, 1);
+        setFlag(_Z, 0);
     }
     
     setFlag(_H, 0);
