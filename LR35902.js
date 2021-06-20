@@ -1080,10 +1080,10 @@ decode[0x04] = function() { // INC B
     return incr(B,1);
 }
 decode[0x0C] = function() { // INC C
-    return incr(B,1);
+    return incr(C,1);
 }
 decode[0x14] = function() { // INC D
-    return incr(C,1);
+    return incr(D,1);
 }
 decode[0x1C] = function() { // INC E
     return incr(E,1);
@@ -1371,10 +1371,10 @@ decode[0x17] = function() {
     var a = (getByteRegister(A)<<1)&0xFF;
     setByteRegister(A, a);
     if(a==0){
-        setFlag(_Z, 0);
+        setFlag(_Z, 1);
     }
     else {
-        setFlag(_Z, 1);
+        setFlag(_Z, 0);
     }
     setFlag(_H, 0);
     setFlag(_N, 0);
@@ -1386,20 +1386,20 @@ decode[0x17] = function() {
 
 decode[0x0F] = function() {
     var obz = getByteRegister(A) & (0x01);
-    setFlag(_C, obz==0?0:1);
+    setFlag(_C, obz);
     var a = (getByteRegister(A)>>1)&0xFF;
     a |= obz<<7;
     
     if(a==0){
-        setFlag(_Z, 0);
+        setFlag(_Z, 1);
     }
     else {
-        setFlag(_Z, 1);
+        setFlag(_Z, 0);
     }
     
     setFlag(_H, 0);
     setFlag(_N, 0);
-    
+    setByteRegister(A, a);
     reg[PC]++;
     return 4;
 }
@@ -1412,16 +1412,17 @@ decode[0x1F] = function() {
     var a = (getByteRegister(A)>>1)&0xFF;
         
     if(a==0){
-        setFlag(_Z, 0);
+        setFlag(_Z, 1);
     }
     else {
-        setFlag(_Z, 1);
+        setFlag(_Z, 0);
     }
     
     setFlag(_H, 0);
     setFlag(_N, 0);
     
     reg[PC]++;
+    setByteRegister(A, a);
     return 4;
 }
 
@@ -1505,7 +1506,7 @@ decode[0xE9] = function() {
 decode[0x18] = function() {
     var n = uncomplement(readMem(++reg[PC]),8);
     reg[PC]+=n+1;
-    return 8;
+    return 12;
 }
 
 // JR cc,n
