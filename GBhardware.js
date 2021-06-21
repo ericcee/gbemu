@@ -47,3 +47,6 @@ function LCDControl(){
 function TimerControl() {
     
 }
+
+function Screen() {
+}
