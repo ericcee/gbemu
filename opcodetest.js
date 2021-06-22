@@ -1144,28 +1144,132 @@ function op38(){ // JR C,r8
     return true;
 }
 function op39(){ // ADD HL,SP
+    reset();
 	writeMem(0, 0x39);
+	reg[HL] = 0xFF00;
+    reg[SP] = 0xFF;
+	var cpul = decode[readMem(0)]();
+    
+    var passes = [];
+    passes.push(cpul == 8);
+    passes.push(reg[PC] == 1);
+    passes.push(reg[HL] == 0xFFFF);
+    passes.push(getFlag(_C) == 0);
+    reset();
+    reg[HL] = 0xFFFF;
+    reg[SP] = 0x01;
 	decode[readMem(0)]();
+    passes.push(reg[HL] == 0);
+    passes.push(getFlag(_C) == 1);
+    
+    for(var i = 0; i < passes.length; i++) if(!passes[i]) return i;
+    return true;
 }
 function op3A(){ // LD A,(HL-)
+    reset();
 	writeMem(0, 0x3A);
-	decode[readMem(0)]();
+    reg[HL] = 0x1155;
+    writeMem(reg[HL], 0xFD);
+	var cpul = decode[readMem(0)]();
+    
+    var passes = [];
+    passes.push(reg[HL] == 0x1154);
+    passes.push(getByteRegister(A) == 0xFD);
+    passes.push(reg[PC] == 1);
+    passes.push(cpul == 8);
+    
+    for(var i = 0; i < passes.length; i++) if(!passes[i]) return i;
+    return true;
 }
 function op3B(){ // DEC SP
+    reset();
 	writeMem(0, 0x3B);
-	decode[readMem(0)]();
+    
+    var z = getFlag(_Z);
+    var h = getFlag(_H);
+    var n = getFlag(_N);
+    var c = getFlag(_C);
+    
+	var cpul = decode[readMem(0)]();
+    
+    var passes = [];
+    passes.push(reg[PC] == 1);
+    passes.push(cpul == 8);
+    passes.push(reg[SP] == 0xFFFF);
+    passes.push(getFlag(_Z) == z);
+    passes.push(getFlag(_H) == h);
+    passes.push(getFlag(_N) == n);
+    passes.push(getFlag(_C) == c);
+    
+    for(var i = 0; i < passes.length; i++) if(!passes[i]) return i;
+    return true;
 }
 function op3C(){ // INC A
+    reset();
 	writeMem(0, 0x3C);
-	decode[readMem(0)]();
+	var oldCarry = getFlag(_C);
+	var cpul = decode[readMem(0)]();
+    
+    var passes = [reg[PC]==1, cpul == 4, getByteRegister(A) == 1, getFlag(_Z) == 0, getFlag(_N) == 0, getFlag(_H) == 0, oldCarry == getFlag(_C)];
+    reg[PC] = 0;
+    
+    setByteRegister(A, 0x0F);
+    cpul = decode[readMem(0)]();
+    passes.push(getFlag(_Z) == 0);
+    passes.push(getFlag(_H) == 1);
+    passes.push(getFlag(_N) == 0);
+    passes.push(getFlag(_C) == oldCarry);
+    reg[PC] = 0;
+    
+    setByteRegister(A, 0xFF);
+    cpul = decode[readMem(0)]();
+    passes.push(getFlag(_Z) == 1);
+    passes.push(getFlag(_H) == 1);
+    passes.push(getFlag(_N) == 0);
+    passes.push(getFlag(_C) == oldCarry);
+    
+    for(var i = 0; i < passes.length; i++) if(!passes[i]) return i;
+    return true;
 }
 function op3D(){ // DEC A
+    reset();
 	writeMem(0, 0x3D);
-	decode[readMem(0)]();
+	setByteRegister(A, 1);
+    var c = getFlag(_C);
+	var cpul = decode[readMem(0)]();
+    var passes = [];
+    passes.push(reg[PC] == 1);
+    passes.push(cpul == 4);
+    passes.push(getFlag(_N) == 1);
+    passes.push(getFlag(_Z) == 1);
+    passes.push(getFlag(_C) == c);
+    passes.push(getFlag(_H) == 0);
+    passes.push(getByteRegister(A) == 0);
+    reset();
+    setByteRegister(A, 0xFF);
+    var cpul = decode[readMem(0)]();
+    passes.push(getFlag(_N) == 1);
+    passes.push(getFlag(_Z) == 0);
+    passes.push(getFlag(_C) == c);
+    passes.push(getFlag(_H) == 0);
+    passes.push(getByteRegister(A) == 0xFE);
+    
+    for(var i = 0; i < passes.length; i++) if(!passes[i]) return i;
+    return true;
 }
 function op3E(){ // LD A,d8
+    reset();
 	writeMem(0, 0x3E);
-	decode[readMem(0)]();
+    writeMem(1, 0x12);
+	var cpul = decode[readMem(0)]();
+    
+    var passes = [];
+    passes.push(cpul == 8);
+    passes.push(reg[PC] == 2);
+    passes.push(getByteRegister(A) == 0x12);
+    
+    for(var i = 0; i < passes.length; i++) if(!passes[i]) return i;
+    return true;
 }
 function op3F(){ // CCF
     reset();
@@ -1191,261 +1295,327 @@ function op3F(){ // CCF
     for(var i = 0; i < passes.length; i++) if(!passes[i]) return i;
     return true;
 }
-function op40(){
+
+function LDxy(r1, r2){
+    reset();
+    var cpul = decode[readMem(0)]();
+    var r1v = getByteRegister(r1v);
+    var r2v = getByteRegister(r2v);
+    
+    var passes = [];
+    passes.push(r1v==r2v);
+    passes.push(cpul == 4);
+    passes.push(reg[PC] == 1);
+    
+    for(var i = 0; i < passes.length; i++) if(!passes[i]) return i;
+    return true;
+}
+
+function LDxa(r1, r16){
+    reset();
+    reg[r16] = 0x1234;
+    writeMem(reg[r16], 0xDF);
+    
+    var cpul = decode[readMem(0)]();
+    
+    var passes = [];
+    passes.push(cpul == 8);
+    passes.push(getByteRegister(r1) == readMem(reg[r16]));
+    passes.push(reg[PC] == 1);
+    
+    
+    for(var i = 0; i < passes.length; i++) if(!passes[i]) return i;
+    return true;
+}
+
+function LDax(r16, r1){
+    reset();
+    reg[r16] = 0x1235;
+    if(r1 != H && r1 != L)setByteRegister(r1, 0xDF);
+    
+    var cpul = decode[readMem(0)]();
+    
+    var passes = [];
+    passes.push(cpul == 8);
+    passes.push(readMem(0x1235) == getByteRegister(r1));
+    passes.push(reg[PC] == 1);
+    
+    if(r1 != H && r1 != L){}
+    else {
+        console.log(readMem(reg[r16]).toString(16));
+        console.log(getByteRegister(r1).toString(16));
+        console.log(readMem(0x1235) == getByteRegister(r1));
+    }
+    
+    for(var i = 0; i < passes.length; i++) if(!passes[i]) return i;
+    return true;
+}
+
+function op40(){ // LD B,B
 	writeMem(0, 0x40);
-	decode[readMem(0)]();
+    return LDxy(B,B);
 }
-function op41(){
+function op41(){ // LD B,C
 	writeMem(0, 0x41);
-	decode[readMem(0)]();
+	return LDxy(B,C);
 }
-function op42(){
+function op42(){ // LD B,D
 	writeMem(0, 0x42);
-	decode[readMem(0)]();
+	return LDxy(B,D);
 }
-function op43(){
+function op43(){ // LD B,E
 	writeMem(0, 0x43);
-	decode[readMem(0)]();
+	return LDxy(B,E);
 }
-function op44(){
+function op44(){ // LD B,H
 	writeMem(0, 0x44);
-	decode[readMem(0)]();
+	return LDxy(B,H);
 }
-function op45(){
+function op45(){ // LD B,L
 	writeMem(0, 0x45);
-	decode[readMem(0)]();
+	return LDxy(B,L);
 }
-function op46(){
+function op46(){ // LD B,(HL)
 	writeMem(0, 0x46);
-	decode[readMem(0)]();
+	return LDxa(B, HL);
 }
-function op47(){
+function op47(){ // LD B,A
 	writeMem(0, 0x47);
-	decode[readMem(0)]();
+	return LDxy(B,A);
 }
-function op48(){
+function op48(){ // LD C,B
 	writeMem(0, 0x48);
-	decode[readMem(0)]();
+	return LDxy(C,B);
 }
-function op49(){
+function op49(){ // LD C,C
 	writeMem(0, 0x49);
-	decode[readMem(0)]();
+	return LDxy(C,C);
 }
-function op4A(){
+function op4A(){ // LD C,D
 	writeMem(0, 0x4A);
-	decode[readMem(0)]();
+	return LDxy(C,D);
 }
-function op4B(){
+function op4B(){ // LD C,E
 	writeMem(0, 0x4B);
-	decode[readMem(0)]();
+	return LDxy(C,E);
 }
-function op4C(){
-	writeMem(0, 0x4C);
-	decode[readMem(0)]();
+function op4C(){ // LD C,H
+	writeMem(0, 0x4C); 
+	return LDxy(C,H);
 }
-function op4D(){
+function op4D(){ // LD C,L
 	writeMem(0, 0x4D);
-	decode[readMem(0)]();
+	return LDxy(C,L);
 }
-function op4E(){
+function op4E(){ // LD C,(HL)
 	writeMem(0, 0x4E);
-	decode[readMem(0)]();
+	return LDxa(C, HL);
 }
-function op4F(){
+function op4F(){ // LD C,A
 	writeMem(0, 0x4F);
-	decode[readMem(0)]();
+	return LDxy(C,A);
 }
-function op50(){
+function op50(){ // LD D,B
 	writeMem(0, 0x50);
-	decode[readMem(0)]();
+	return LDxy(D,B);
 }
-function op51(){
+function op51(){ // LD D,C
 	writeMem(0, 0x51);
-	decode[readMem(0)]();
+	return LDxy(D,C);
 }
-function op52(){
+function op52(){ // LD D,D
 	writeMem(0, 0x52);
-	decode[readMem(0)]();
+	return LDxy(D,D);
 }
-function op53(){
+function op53(){ // LD D,E
 	writeMem(0, 0x53);
-	decode[readMem(0)]();
+	return LDxy(D,E);
 }
-function op54(){
+function op54(){ // LD D,H
 	writeMem(0, 0x54);
-	decode[readMem(0)]();
+	return LDxy(D,H);
 }
-function op55(){
+function op55(){ // LD D,L
 	writeMem(0, 0x55);
-	decode[readMem(0)]();
+	return LDxy(D,L);
 }
-function op56(){
+function op56(){ // LD D,(HL)
 	writeMem(0, 0x56);
-	decode[readMem(0)]();
+	return LDxa(D,HL);
 }
-function op57(){
+function op57(){ // LD D,A
 	writeMem(0, 0x57);
-	decode[readMem(0)]();
+	return LDxy(D,A);
 }
-function op58(){
+function op58(){ // LD E,B
 	writeMem(0, 0x58);
-	decode[readMem(0)]();
+	return LDxy(E,B);
 }
-function op59(){
+function op59(){ // LD E,C
 	writeMem(0, 0x59);
-	decode[readMem(0)]();
+	return LDxy(E,C);
 }
-function op5A(){
+function op5A(){ // LD E,D
 	writeMem(0, 0x5A);
-	decode[readMem(0)]();
+	return LDxy(E,D);
 }
-function op5B(){
+function op5B(){ // LD E,E
 	writeMem(0, 0x5B);
-	decode[readMem(0)]();
+	return LDxy(E,E);
 }
-function op5C(){
+function op5C(){ // LD E,H
 	writeMem(0, 0x5C);
-	decode[readMem(0)]();
+	return LDxy(E,H);
 }
-function op5D(){
+function op5D(){ // LD E,L
 	writeMem(0, 0x5D);
-	decode[readMem(0)]();
+	return LDxy(E,L);
 }
-function op5E(){
+function op5E(){ // LD E,(HL)
 	writeMem(0, 0x5E);
-	decode[readMem(0)]();
+	return LDxa(E,HL);
 }
-function op5F(){
+function op5F(){ // LD E,A
 	writeMem(0, 0x5F);
-	decode[readMem(0)]();
+	return LDxy(E,A);
 }
-function op60(){
+function op60(){ // LD H,B
 	writeMem(0, 0x60);
-	decode[readMem(0)]();
+	return LDxy(H,B);
 }
-function op61(){
+function op61(){ // LD H,C
 	writeMem(0, 0x61);
-	decode[readMem(0)]();
+	return LDxy(H,C);
 }
-function op62(){
+function op62(){ // LD H,D
 	writeMem(0, 0x62);
-	decode[readMem(0)]();
+	return LDxy(H,D);
 }
-function op63(){
+function op63(){ // LD H,E
 	writeMem(0, 0x63);
-	decode[readMem(0)]();
+	return LDxy(H,E);
 }
-function op64(){
+function op64(){ // LD H,H
 	writeMem(0, 0x64);
-	decode[readMem(0)]();
+	return LDxy(H,H);
 }
-function op65(){
+function op65(){ // LD H,L
 	writeMem(0, 0x65);
-	decode[readMem(0)]();
+	return LDxy(H,L);
 }
-function op66(){
+function op66(){ // LD H,(HL)
 	writeMem(0, 0x66);
-	decode[readMem(0)]();
+	return LDxa(H,HL);
 }
-function op67(){
+function op67(){ // LD H,A
 	writeMem(0, 0x67);
-	decode[readMem(0)]();
+	return LDxy(H,A);
 }
-function op68(){
+function op68(){ // LD L,B
 	writeMem(0, 0x68);
-	decode[readMem(0)]();
+	return LDxy(L,B);
 }
-function op69(){
+function op69(){ // LD L,C
 	writeMem(0, 0x69);
-	decode[readMem(0)]();
+	return LDxy(L,C);
 }
-function op6A(){
+function op6A(){ // LD L,D
 	writeMem(0, 0x6A);
-	decode[readMem(0)]();
+	return LDxy(L,D);
 }
-function op6B(){
+function op6B(){ // LD L,E
 	writeMem(0, 0x6B);
-	decode[readMem(0)]();
+	return LDxy(L,E);
 }
-function op6C(){
+function op6C(){ // LD L,H
 	writeMem(0, 0x6C);
-	decode[readMem(0)]();
+	return LDxy(L,H);
 }
-function op6D(){
+function op6D(){ // LD L,L
 	writeMem(0, 0x6D);
-	decode[readMem(0)]();
+	return LDxy(L,L);
 }
-function op6E(){
+function op6E(){ // LD L,(HL)
 	writeMem(0, 0x6E);
-	decode[readMem(0)]();
+	return LDxa(L,HL);
 }
-function op6F(){
+function op6F(){ // LD L,A
 	writeMem(0, 0x6F);
-	decode[readMem(0)]();
+	return LDxy(L,A);
 }
-function op70(){
+function op70(){ // LD (HL),B
 	writeMem(0, 0x70);
-	decode[readMem(0)]();
+	return LDax(HL,B);
 }
-function op71(){
+function op71(){ // LD (HL),C
 	writeMem(0, 0x71);
-	decode[readMem(0)]();
+	return LDax(HL,C);
 }
-function op72(){
+function op72(){ // LD (HL),D
 	writeMem(0, 0x72);
-	decode[readMem(0)]();
+	return LDax(HL,D);
 }
-function op73(){
+function op73(){ // LD (HL),E
 	writeMem(0, 0x73);
-	decode[readMem(0)]();
+	return LDax(HL,E);
 }
-function op74(){
+function op74(){ // LD (HL),H
 	writeMem(0, 0x74);
-	decode[readMem(0)]();
+	return LDax(HL,H);
 }
-function op75(){
+function op75(){ // LD (HL),L 
 	writeMem(0, 0x75);
-	decode[readMem(0)]();
+	return LDax(HL,L);
 }
-function op76(){
+function op76(){ // HALT
+    reset();
 	writeMem(0, 0x76);
-	decode[readMem(0)]();
+	var cpul = decode[readMem(0)]();
+    
+    var passes = [];
+    
+    passes.push(halting == true);
+    passes.push(cpul == 4);
+    passes.push(reg[PC] == 1);
+    
+    for(var i = 0; i < passes.length; i++) if(!passes[i]) return i;
+    return true;
 }
-function op77(){
+function op77(){ // LD (HL),A
 	writeMem(0, 0x77);
-	decode[readMem(0)]();
+	return LDax(HL,A);
 }
-function op78(){
+function op78(){ // LD A,B
 	writeMem(0, 0x78);
-	decode[readMem(0)]();
+	return LDxy(A,B);
 }
-function op79(){
+function op79(){ // LD A,C
 	writeMem(0, 0x79);
-	decode[readMem(0)]();
+	return LDxy(A,C);
 }
-function op7A(){
+function op7A(){ // LD A,D
 	writeMem(0, 0x7A);
-	decode[readMem(0)]();
+	return LDxy(A,D);
 }
-function op7B(){
+function op7B(){ // LD A,E
 	writeMem(0, 0x7B);
-	decode[readMem(0)]();
+	return LDxy(A,E);
 }
-function op7C(){
+function op7C(){ // LD A,H
 	writeMem(0, 0x7C);
-	decode[readMem(0)]();
+	return LDxy(A,H);
 }
-function op7D(){
+function op7D(){ // LD A,L
 	writeMem(0, 0x7D);
-	decode[readMem(0)]();
+	return LDxy(A,L);
 }
-function op7E(){
+function op7E(){ // LD A,(HL)
 	writeMem(0, 0x7E);
-	decode[readMem(0)]();
+	return LDxa(A,HL);
 }
-function op7F(){
+function op7F(){ // LD A,A
 	writeMem(0, 0x7F);
-	decode[readMem(0)]();
+	return LDxy(A,A);
 }
 function op80(){
 	writeMem(0, 0x80);
