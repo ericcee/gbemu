@@ -5,10 +5,9 @@
 TODO:
 - [x] Add a Opcode decoder
 	- [x] Implement a virtual Gameboy Processor
-		- [ ] Testing/Debugging
 	- [ ] Debug the decoder/processor
 - [ ] Hardware emulation
-- [ ] Memory Mapper
+- [x] Memory Mapper
 - [ ] Cartrige Reader
 - [ ] Add HTML5 Canvas Screen output.
 - [ ] Make Mobile compatible.
