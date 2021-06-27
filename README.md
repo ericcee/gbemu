@@ -4,7 +4,8 @@
 
 TODO:
 - [x] Add a Opcode decoder
-	- [ ] Implement a virtual Gameboy Processor
+	- [x] Implement a virtual Gameboy Processor
+		- [ ] Testing/Debugging
 	- [ ] Debug the decoder/processor
 - [ ] Hardware emulation
 - [ ] Memory Mapper
