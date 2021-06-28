@@ -44,7 +44,9 @@ var NR10  = 0;
 var NR11  = 0; 
 var NR12  = 0; 
 var NR13  = 0; 
-var NR14  = 0; 
+var NR14  = 0;
+var NRNA1 = 0;
+var NRNA2 = 0;
 var NR21  = 0; 
 var NR22  = 0; 
 var NR23  = 0; 
@@ -106,20 +108,34 @@ var video_ram = new Uint8Array(0x1FFF); // Start 0x8000
 var ext_cart_ram = new Uint8Array(0x1FFF); // Start 0xA000
 var OAM = new Uint8Array(0x9F); // Start 0xFE00
 var HW_BARE = new Uint8Array(0x7F); // Start 0xFF00
-var rom_bank = [ 0xC3, 0x00, 0x01, 0x00, 0x78, 0x61, 0x38, 0x00,
-                0xC3, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0xC3, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0xC3, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0xC3, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0xC3, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0xC3, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0xC3, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0xC3, 0x00, 0xC7, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0xC3, 0x10, 0xC7, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0xD9, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0xD9, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]; // Start 0x100 size 0x7EFF
+var rom_bank = new Uint8Array(0x7FFF);
 
+function resetSoundRegisters(){
+    NR10 = 0x80
+    NR11 = 0xBF
+    NR12 = 0xF3
+    NR13 = 0
+    NR14 = 0xBF
+    NRNA1 = 0xFF
+    NR21 = 0x3F
+    NR22 = 0x00
+    NR23 = 0
+    NR24 = 0xBF
+    NR30 = 0x7F
+    NR31 = 0xFF
+    NR32 = 0x9F
+    NR33 = 0
+    NR33 = 0xBF
+    NRNA2 = 0xFF
+    NR41 = 0xFF
+    NR42 = 0x00
+    NR43 = 0x00
+    NR30 = 0xBF
+    NR50 = 0x77
+    NR51 = 0xF3
+    NR52 = 0xF1
 
+}
 
 function writeMem(address, b){
     if(address >= 0x0000 && address <= 0x00FF){ // BIOS rom
@@ -173,7 +189,7 @@ function writeMem(address, b){
       HW_BARE[address - 0xFF00] = b;
       switch(address){
         case 0xFF00: PAD   = b;  break; // JoyPad
-        case 0xFF40: LCDC  = b; LCDControl(); break; // LCD Control Register
+        case 0xFF40: LCDC  = b;  break; // LCD Control Register
         case 0xFF41: STAT  = b;  break; // LCD Control Status
         case 0xFF69: BCPD  = b;  break; // BCPD/BGPD - CGB Mode Only - Background Palette Data
         case 0xFF6B: OCPD  = b;  break; // OCPD/OBPD - CGB Mode Only - Sprite Palette Data
@@ -200,6 +216,8 @@ function writeMem(address, b){
         case 0xFF12: NR12  = b;  break; // NR12 - Channel 1 Volume Envelope (R/W)
         case 0xFF13: NR13  = b;  break; // NR13 - Channel 1 Frequency lo (Write Only)
         case 0xFF14: NR14  = b;  break; // NR14 - Channel 1 Frequency hi (R/W)
+        case 0xFF15: NRNA1 = b;  break;
+        case 0xFF1F: NRNA2 = b;  break;
         case 0xFF16: NR21  = b;  break; // NR21 - Channel 2 Sound Length/Wave Pattern Duty (R/W)
         case 0xFF17: NR22  = b;  break; // NR22 - Channel 2 Volume Envelope (R/W)
         case 0xFF18: NR23  = b;  break; // NR23 - Channel 2 Frequency lo data (W)
@@ -221,7 +239,7 @@ function writeMem(address, b){
         case 0xFF0F: IF    = b;  break; // IF Register
         case 0xFF04: DIV   = b;  break; // DIV - Divider Register (R/W)
         case 0xFF05: TIMA  = b;  break; // TIMA - Timer counter (R/W)
-        case 0xFF07: TAC   = b; TimerControl(); break; // TAC - Timer Control (R/W)
+        case 0xFF07: TAC   = b;  break; // TAC - Timer Control (R/W)
         case 0xFF06: TMA   = b;  break; // TMA - Timer Modulo (R/W)
         case 0xFF4D: KEY1  = b; break; // KEY1 - CGB Mode Only - Prepare Speed Switch
         case 0xFF56: RP    = b; break; // RP - CGB Mode Only - Infrared Communications Port
@@ -256,14 +274,14 @@ function readMem(address){
     }
     
     if(address >= 0x0100 && address <= 0x014F){ // Cartrige header
-        bytetoreturn = rom_bank[address - 0x0100];
+        bytetoreturn = rom_bank[address];
     }
     
     if(address >= 0x0150 && address <= 0x3FFF){ // ROM Bank 0
-        bytetoreturn = rom_bank[address - 0x0100];
+        bytetoreturn = rom_bank[address];
     }
     if(address >= 0x4000 && address <= 0x7FFF){ // ROM Bank u
-        bytetoreturn = rom_bank[address - 0x0100];
+        bytetoreturn = rom_bank[address];
     }
     
     if(address >= 0x8000 && address <= 0x97FF){ // Character RAM
@@ -328,6 +346,8 @@ function readMem(address){
           case 0xFF12: bytetoreturn =  NR12;   break; // NR12 - Channel 1 Volume Envelope (R/W)
           case 0xFF13: bytetoreturn =  NR13;   break; // NR13 - Channel 1 Frequency lo (Write Only)
           case 0xFF14: bytetoreturn =  NR14;   break; // NR14 - Channel 1 Frequency hi (R/W)
+          case 0xFF15: bytetoreturn =  NRNA1;  break;
+          case 0xFF1F: bytetoreturn =  NRNA2;  break;
           case 0xFF16: bytetoreturn =  NR21;   break; // NR21 - Channel 2 Sound Length/Wave Pattern Duty (R/W)
           case 0xFF17: bytetoreturn =  NR22;   break; // NR22 - Channel 2 Volume Envelope (R/W)
           case 0xFF18: bytetoreturn =  NR23;   break; // NR23 - Channel 2 Frequency lo data (W)

@@ -25,12 +25,12 @@ const _N = 1;
 const _H = 2;
 const _C = 3;
 
-reg[AF] = 0x01B0;
-reg[BC] = 0x0013;
-reg[DE] = 0x00D8;
-reg[HL] = 0x014D;
-reg[SP] = 0xFFFE;
-reg[PC] = 0x0100;
+reg[AF] = 0;
+reg[BC] = 0;
+reg[DE] = 0;
+reg[HL] = 0;
+reg[SP] = 0;
+reg[PC] = 0;
 
 var halting = false;
 var stopping = false;
@@ -511,7 +511,11 @@ decode[0xF9] = function() { // LD SP,HL
 
 decode[0xF8] = function() { // LDHL SP,n
     reg[PC]++;
-    var n = readMem(reg[PC]);
+    var n = uncomplement(readMem(reg[PC]),8);
+    
+    setFlag(_H, (!!(((SP&0x0F) + (b&0x0F)) &0x010))?1:0);
+    setFlag(_C, (!!(((SP&0xFF) + (b&0xFF)) &0x100))?1:0);
+    
     reg[PC]++;
     reg[HL] = reg[SP]+n;
     return 12;
@@ -596,7 +600,7 @@ function setFlagsFromADDAB(a,b,carry,substract){ // TODO: Needs Testing
     
     setFlag(_C, (res > 255 && res < 0));
     
-    setFlag(_H, !!(((a&0x0F) + (b&0x0F) + getFlag(_C)) & 0x10));
+    setFlag(_H, (!!(((a&0x0F) + (b&0x0F) + getFlag(_C)) & 0x10))?1:0);
 }
 
 function addnn(n1,n2,carry,substract){
@@ -985,7 +989,7 @@ function compare(num){
 function CPab(a,b){
     var res = a-b;
     setFlag(_N, 1);
-    setFlag(_H, !!(((a&0x0F) - (b&0x0F)) & 0x10));
+    setFlag(_H, (!!(((a&0x0F) - (b&0x0F)) & 0x10))?1:0);
     
     compare(res&0xFF);
 }
@@ -1321,7 +1325,7 @@ decode[0x76] = function() {
 // STOP
 
 decode[0x10] = function() {
-    stopping = true;
+    if(readMem(reg[PC]+1) == 0x00)stopping = true;
     reg[PC]+=2;
     return 4;
 }
@@ -1629,64 +1633,64 @@ decode[0xDC] = function() { // C
 decode[0xC7] = function() { // 0x00
     gb_push(reg[PC]+1);
     reg[PC] = 0x00;
-    return 32;
+    return 16;
 }
 
 decode[0xCF] = function() { // 0x08
     gb_push(reg[PC]+1);
     reg[PC] = 0x08;
-    return 32;
+    return 16;
 }
 
 decode[0xD7] = function() { // 0x10
     gb_push(reg[PC]+1);
     reg[PC] = 0x10;
-    return 32;
+    return 16;
 }
 
 decode[0xDF] = function() { // 0x18
     gb_push(reg[PC]+1);
     reg[PC] = 0x18;
-    return 32;
+    return 16;
 }
 
 decode[0xE7] = function() { // 0x20
     gb_push(reg[PC]+1);
     reg[PC] = 0x20;
-    return 32;
+    return 16;
 }
 
 decode[0xEF] = function() { // 0x28
     gb_push(reg[PC]+1);
     reg[PC] = 0x28;
-    return 32;
+    return 16;
 }
 
 decode[0xF7] = function() { // 0x30
     gb_push(reg[PC]+1);
     reg[PC] = 0x30;
-    return 32;
+    return 16;
 }
 
 decode[0xFF] = function() { // 0x38
     gb_push(reg[PC]+1);
     reg[PC] = 0x38;
-    return 32;
+    return 16;
 }
 
 // RET
 
 decode[0xC9] = function() {
     gb_pop(PC);
-    return 8;
+    return 16;
 }
 
 // RET cc
 
 decode[0xC0] = function() { // NZ
-    if(getFlag(_Z)==1){
+    if(getFlag(_Z)==0){
         gb_pop(PC);
-        return 8;
+        return 20;
     }
     else {
         reg[PC]++;
@@ -1694,9 +1698,9 @@ decode[0xC0] = function() { // NZ
     }
 }
 decode[0xC8] = function() { // Z
-    if(getFlag(_Z)==0){
+    if(getFlag(_Z)==1){
         gb_pop(PC);
-        return 8;
+        return 20;
     }
     else {
         reg[PC]++;
@@ -1704,9 +1708,9 @@ decode[0xC8] = function() { // Z
     }
 }
 decode[0xD0] = function() { // NC
-    if(getFlag(_C)==1){
+    if(getFlag(_C)==0){
         gb_pop(PC);
-        return 8;
+        return 20;
     }
     else {
         reg[PC]++;
@@ -1714,9 +1718,9 @@ decode[0xD0] = function() { // NC
     }
 }
 decode[0xD8] = function() { // C
-    if(getFlag(_C)==0){
+    if(getFlag(_C)==1){
         gb_pop(PC);
-        return 8;
+        return 20;
     }
     else {
         reg[PC]++;
@@ -1729,7 +1733,7 @@ decode[0xD8] = function() { // C
 decode[0xD9] = function() {
     gb_pop(PC);
     IME = true;
-    return 8;
+    return 16;
 }
 
 // Prefix CB implementation

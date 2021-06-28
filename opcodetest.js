@@ -1617,6 +1617,36 @@ function op7F(){ // LD A,A
 	writeMem(0, 0x7F);
 	return LDxy(A,A);
 }
+
+const ADD = 1
+const ADC = 2
+const SUB = 3
+const SBC = 4
+const AND = 5
+const OR  = 6
+const XOR = 7
+const CP  = 8
+
+function testALU(r1, r2, op) {
+    switch(op) {
+        case ADD:
+            break;
+        case ADC:
+            break;
+        case SUB:
+            break;
+        case AND:
+            break;
+        case OR:
+            break;
+        case XOR:
+            break;
+        case CP:
+            break;
+    }
+    
+}
+
 function op80(){
 	writeMem(0, 0x80);
 	decode[readMem(0)]();
